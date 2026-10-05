@@ -1,11 +1,11 @@
 # CE NR-010 Pin Manifest
 
-**Applies to:** release 0.1.0 (see `VERSION`)
+**Applies to:** release 0.1.1 (see `VERSION`)
 
 ## Purpose
 
 This manifest records the construction-time pins for the Community Edition
-at release 0.1.0. These files are vendored/built at construction time and
+at release 0.1.1. These files are vendored/built at construction time and
 define the semantic foundation for CE runtime operations.
 
 **NR-010 bar:** TOP Core is a construction-time pin; runtime must not require
@@ -13,7 +13,7 @@ a live TOP network dependency.
 
 ## Pinned Artifacts
 
-Measured on the 0.1.0 tree via `sha256sum`:
+Measured on the 0.1.1 tree via `sha256sum`:
 
 | Artifact | Role | SHA-256 |
 | --- | --- | --- |
