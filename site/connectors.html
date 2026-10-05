@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Move study definitions in and SDTM outputs out with the optional rclone bridge: Google Drive, OneDrive, WebDAV, S3-compatibles, SFTP. Off by default.">
+<meta name="theme-color" content="#131313">
+<title>Connectors · Scientix.AI Community Edition</title>
+<link rel="icon" href="assets/brand/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/brand/favicon.png" type="image/png" sizes="any">
+<link rel="stylesheet" href="style.css">
+<script>(function(){try{var m=localStorage.getItem("ce-mode");if(m==="dark"||m==="light")document.documentElement.setAttribute("data-mode",m);}catch(e){}})();</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header"><div class="wrap">
+  <a class="brand" href="index.html"><img src="assets/brand/scientix-ai-logo-inverse.svg" alt="Scientix.AI" width="494" height="77"><span class="edition">Community Edition</span></a>
+  <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Menu"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/></svg></button>
+  <nav class="site-nav" id="site-nav" aria-label="Site">
+    <a href="getting-started.html">Getting started</a>
+    <a href="architecture.html">Architecture</a>
+    <a href="connectors.html" aria-current="page">Connectors</a>
+    <a href="https://github.com/scientixai/community-edition">GitHub</a>
+  </nav>
+  <button class="mode-toggle" type="button" aria-label="Switch color mode"><svg class="sun" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1"/></svg><svg class="moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 10.2A6 6 0 0 1 5.8 2.5a6 6 0 1 0 7.7 7.7z"/></svg></button>
+</div></header>
+
+<main id="main"><div class="wrap doc">
+<article>
+<p class="crumbs"><a href="index.html">Community Edition</a> / Docs / Connectors</p>
+<h1>Remote storage, in and out</h1>
+<p class="summary">Study definitions rarely start life on the machine running the pipeline, and SDTM outputs rarely end there. The connector bridge covers both directions with a single optional service built on <a href="https://rclone.org">rclone</a>, which speaks Google Drive, OneDrive, WebDAV (Nextcloud, SharePoint), S3 and S3-compatibles, SFTP, and dozens more backends.</p>
+<div class="note"><p>Connectors are off by default. The core stack stays fully offline-capable; nothing phones anywhere until you enable the profile and configure a remote.</p></div>
+
+<h2 id="enable">Enable</h2>
+<pre><code>docker compose --profile connectors up -d</code></pre>
+
+<h2 id="flows">Two flows</h2>
+<p><strong>Inbox.</strong> <code>pull</code> copies files from a remote folder into <code>lake/data/inbox/&lt;remote&gt;/</code>, then ingests anything that looks like a USDM study definition (a JSON file with a top-level <code>study</code> object) straight into the broker. Drop a study in a shared folder; it becomes entities.</p>
+<p><strong>Publish.</strong> <code>publish</code> copies the lake's outputs (SDTM datasets, Dataset-JSON design domains) to a folder on the remote, where biostatisticians actually work.</p>
+
+<h2 id="wizard">Configure with the wizard</h2>
+<p>The <a href="getting-started.html#first-run">setup wizard</a> (<code>http://localhost:8080/setup.html</code>) creates keyed remotes directly: WebDAV, S3 and S3-compatibles, SFTP, FTP. Test the connection, pull, publish, all from the page.</p>
+
+<h2 id="oauth">OAuth backends: Google Drive and OneDrive</h2>
+<p>OAuth needs one browser step that a headless container cannot do. Run the guided flow once:</p>
+<pre><code>docker compose --profile connectors exec bridge rclone config</code></pre>
+<p>Or authorize on your workstation and paste the token:</p>
+<pre><code><span class="c"># on a machine with a browser</span>
+rclone authorize "drive"
+<span class="c"># then, in the wizard's terminal flow or rclone config,
+# paste the token JSON when asked</span></code></pre>
+<p>Once created, OAuth remotes appear in the wizard's remote list and work with pull and publish like any other backend.</p>
+
+<h2 id="api">The API, if you skip the wizard</h2>
+<pre><code><span class="c"># create a remote (keyed backends)</span>
+curl -X POST localhost:8107/remotes -H 'Content-Type: application/json' -d '{
+  "name": "sitehub", "type": "webdav",
+  "params": {"url": "https://dav.example.com", "vendor": "other",
+             "user": "demo", "pass": "..."}}'
+
+<span class="c"># test, pull, publish</span>
+curl -X POST localhost:8107/check   -d '{"remote": "sitehub"}' -H 'Content-Type: application/json'
+curl -X POST localhost:8107/pull    -d '{"remote": "sitehub", "path": "studies"}' -H 'Content-Type: application/json'
+curl -X POST localhost:8107/publish -d '{"remote": "sitehub", "path": "pne-lake"}' -H 'Content-Type: application/json'</code></pre>
+
+<h2 id="credentials">Notes on credentials</h2>
+<ul>
+  <li>rclone stores credentials obscured in its config file, which lives in a named Docker volume (<code>bridge-config</code>) and never leaves the bridge container.</li>
+  <li>The bridge has no inbound exposure beyond your localhost port mapping; it only dials out to the remotes you configure.</li>
+  <li>S3 here means any S3-compatible endpoint: AWS, MinIO, Ceph, Cloudflare R2. Point <code>endpoint</code> wherever yours lives. Using AWS S3 through the bridge is your deployment's choice; the core pipeline still requires nothing from it.</li>
+</ul>
+<nav class="doc-nav" aria-label="Pages"><a href="architecture.html"><small>Previous</small>Architecture</a></nav>
+</article>
+<aside class="toc" aria-label="On this page"><b>On this page</b><ol><li><a href="#enable">Enable</a></li><li><a href="#flows">Two flows</a></li><li><a href="#wizard">Configure with the wizard</a></li><li><a href="#oauth">OAuth backends</a></li><li><a href="#api">The API</a></li><li><a href="#credentials">Notes on credentials</a></li></ol></aside>
+</div></main>
+<footer class="site-footer"><div class="wrap">
+  <div class="top">
+    <div>
+      <a class="brand" href="https://scientix.ai"><img src="assets/brand/scientix-ai-logo-inverse.svg" alt="Scientix.AI" width="494" height="77"></a>
+      <p class="tagline">Architecting the future of healthcare</p>
+    </div>
+    <nav aria-label="Footer">
+      <div><b>Docs</b>
+        <a href="getting-started.html">Getting started</a>
+        <a href="architecture.html">Architecture</a>
+        <a href="connectors.html">Connectors</a></div>
+      <div><b>Project</b>
+        <a href="https://github.com/scientixai/community-edition">Source on GitHub</a>
+        <a href="https://github.com/scientixai/community-edition/blob/main/docs/licensing.md">Licensing</a>
+        <a href="https://github.com/scientixai/community-edition/blob/main/TRADEMARKS.md">Trademark policy</a></div>
+      <div><b>Company</b>
+        <a href="https://scientix.ai">About Us</a>
+        <a href="https://top.scientix.ai">The Ontology Project</a></div>
+    </nav>
+  </div>
+  <p class="legal">Provenance Neural Engine&trade; Community Edition. Copyright 2026 Scientix.AI. Code under Apache-2.0. "Provenance Neural Engine" and "PNE" are trademarks of Scientix.AI; the Apache license grants no trademark rights.</p>
+</div></footer>
+<script src="site.js"></script>
+</body>
+</html>

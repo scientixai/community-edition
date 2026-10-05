@@ -1,0 +1,10 @@
+# Local-run overlay when ports 9090 or 8080 are already busy.
+# Remaps Scorpio host 9090 -> 19091 and web host 8080 -> 18080.
+# Uses Compose Spec !override so ports replace rather than append.
+services:
+  scorpio:
+    ports: !override
+      - "19091:9090"
+  web:
+    ports: !override
+      - "18080:8080"

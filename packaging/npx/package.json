@@ -1,0 +1,18 @@
+{
+  "name": "pne-community-edition",
+  "version": "0.1.0",
+  "description": "Installer for the Provenance Neural Engine Community Edition: an AWS-free, domain-agnostic provenance engine on an NGSI-LD broker, demonstrated on clinical research. Requires Docker.",
+  "license": "Apache-2.0",
+  "bin": {
+    "pne-community-edition": "bin/pne-ce.js"
+  },
+  "files": ["bin"],
+  "engines": {
+    "node": ">=18"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/scientixai/community-edition.git"
+  },
+  "keywords": ["cdisc", "ngsi-ld", "sdtm", "usdm", "clinical-research", "scorpio", "duckdb"]
+}

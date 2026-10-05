@@ -1,0 +1,22 @@
+Provenance Neural Engine - Community Edition
+Copyright 2026 Scientix.AI
+
+Licensed under the Apache License, Version 2.0.
+
+"Provenance Neural Engine"™ and "PNE"™ are trademarks of Scientix.AI.
+The Apache-2.0 license does not grant trademark rights; see
+TRADEMARKS.md for the trademark policy.
+
+This distribution includes vocabulary derived from The Ontology Project
+(T.O.P.), cr-domain, https://github.com/scientixai/the-ontology-project,
+Apache-2.0. The file web/public/context/pne-context.jsonld is generated
+from the T.O.P. cr-domain NGSI-LD context artifact plus a small demo
+supplement (see infra/scripts/build-context.py).
+
+The transform service uses sdtm.oak, the open-source CDISC/pharmaverse
+SDTM transformation engine (https://github.com/pharmaverse/sdtm.oak),
+installed from CRAN at container build time.
+
+The architecture (an NGSI-LD broker fronting a CDISC clinical-research
+pipeline) is inspired by the AWS Garnet Framework. This project does not
+include, depend on, or deploy any Garnet code, images, or AWS services.

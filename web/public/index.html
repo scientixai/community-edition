@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Provenance Neural Engine - Community Edition</title>
+<style>
+  /* Self-contained on purpose: no CDN, no webfonts, runs on conference
+     wifi. Palette is a clean-room take on the Scientix "Synthetic
+     Precision" scheme: dark surfaces, teal primary, copper secondary,
+     cream tertiary. */
+  :root {
+    --surface: #131313;
+    --surface-low: #1c1b1b;
+    --surface-high: #2a2a2a;
+    --on-surface: #e5e2e1;
+    --muted: #b9cacb;
+    --outline: #3a494b;
+    --teal: #00dbe7;
+    --teal-dim: #006a71;
+    --copper: #ffb77b;
+    --cream: #f9f9e0;
+    --error: #ffb4ab;
+    --ok: #9be8a5;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--surface);
+    color: var(--on-surface);
+    font: 15px/1.55 "Be Vietnam Pro", "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  header {
+    padding: 2.2rem 1.5rem 1.4rem;
+    border-bottom: 1px solid var(--outline);
+    background: linear-gradient(180deg, #0e0e0e, var(--surface));
+  }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  h1 { margin: 0 0 .3rem; font-size: 1.5rem; font-weight: 600; letter-spacing: .01em; }
+  h1 .edition { color: var(--teal); }
+  header p { margin: .2rem 0 0; color: var(--muted); max-width: 62ch; }
+  .status-row { margin-top: 1rem; display: flex; gap: .6rem; flex-wrap: wrap; }
+  .pill {
+    font-size: .78rem; padding: .18rem .7rem; border-radius: 999px;
+    border: 1px solid var(--outline); color: var(--muted);
+  }
+  .pill.up { border-color: var(--teal-dim); color: var(--teal); }
+  .pill.down { border-color: #5c2b29; color: var(--error); }
+  main { padding: 1.5rem; }
+  .step {
+    background: var(--surface-low);
+    border: 1px solid var(--outline);
+    border-radius: 10px;
+    margin-bottom: 1.1rem;
+    padding: 1.1rem 1.25rem;
+  }
+  .step h2 {
+    margin: 0 0 .35rem; font-size: 1.02rem; font-weight: 600;
+  }
+  .step h2 .num {
+    display: inline-block; width: 1.6rem; height: 1.6rem; line-height: 1.6rem;
+    text-align: center; margin-right: .55rem; border-radius: 50%;
+    background: var(--teal-dim); color: var(--cream); font-size: .85rem;
+  }
+  .step p { margin: .25rem 0 .8rem; color: var(--muted); font-size: .92rem; }
+  button {
+    background: transparent; color: var(--teal);
+    border: 1px solid var(--teal-dim); border-radius: 7px;
+    padding: .45rem 1rem; font: inherit; font-size: .9rem; cursor: pointer;
+    margin: 0 .5rem .5rem 0; transition: background .15s;
+  }
+  button:hover { background: rgba(0, 219, 231, .08); }
+  button.copper { color: var(--copper); border-color: #7a4100; }
+  button.copper:hover { background: rgba(255, 183, 123, .08); }
+  textarea, input[type=text] {
+    width: 100%; background: #0e0e0e; color: var(--on-surface);
+    border: 1px solid var(--outline); border-radius: 7px;
+    padding: .55rem .7rem; font: .86rem/1.5 ui-monospace, Menlo, Consolas, monospace;
+    margin-bottom: .5rem; resize: vertical;
+  }
+  pre.out {
+    background: #0e0e0e; border: 1px solid var(--outline); border-radius: 7px;
+    padding: .7rem .9rem; overflow: auto; max-height: 340px;
+    font: .8rem/1.5 ui-monospace, Menlo, Consolas, monospace;
+    color: var(--cream); white-space: pre-wrap; word-break: break-word;
+  }
+  pre.out:empty { display: none; }
+  pre.out.err { color: var(--error); }
+  table { border-collapse: collapse; font-size: .84rem; margin: .4rem 0; width: 100%; }
+  th, td { border: 1px solid var(--outline); padding: .3rem .6rem; text-align: left; }
+  th { color: var(--teal); font-weight: 600; background: var(--surface-high); }
+  footer { padding: 1.5rem; color: var(--muted); font-size: .82rem; border-top: 1px solid var(--outline); }
+  footer a { color: var(--teal); }
+  .spin { opacity: .55; pointer-events: none; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Provenance Neural Engine <span class="edition">Community Edition</span></h1>
+    <p>A clinical study flowing from USDM authoring to SDTM datasets through an
+       NGSI-LD broker, on your laptop, with no cloud account. Broker: upstream
+       NEC Scorpio, in-memory profile. Vocabulary: T.O.P. cr-domain.
+       Transform: sdtm.oak.
+       First time here? Run the <a href="/setup.html" style="color:var(--teal)">setup wizard</a>.</p>
+    <div class="status-row" id="status-row"></div>
+  </div>
+</header>
+<main>
+<div class="wrap">
+
+  <div class="step">
+    <h2><span class="num">1</span>Author the study</h2>
+    <p>A USDM-style study definition (CARDIO-118, phase 2, two arms) becomes
+       cr-domain NGSI-LD entities in the broker: Study, Arms, Endpoint,
+       EligibilityCriteria, VisitDefinitions, Site, Sponsor.</p>
+    <button onclick="loadStudy(this)">Load USDM study</button>
+    <button class="copper" onclick="readStudy(this)">Read study back from broker</button>
+    <pre class="out" id="out-1"></pre>
+  </div>
+
+  <div class="step">
+    <h2><span class="num">2</span>Project the design to Dataset-JSON</h2>
+    <p>The study design in the broker is projected to CDISC SDTM trial-design
+       domains (TS, TA, TI, TV) as Dataset-JSON files in the lake. Standards
+       are views, not the stored model.</p>
+    <button onclick="project(this)">Project TS / TA / TI / TV</button>
+    <pre class="out" id="out-2"></pre>
+  </div>
+
+  <div class="step">
+    <h2><span class="num">3</span>Enroll participants and record visits</h2>
+    <p>Execution data is written straight through the broker. Every write
+       fires the NGSI-LD subscription: the broker POSTs a notification to the
+       listener, which triggers the sdtm.oak transform. That hop replaced
+       SNS, SQS, and a Lambda.</p>
+    <button onclick="seed(this, 'enrollment-batch.json', 'Enroll P2201 + P2202')">Enroll participants</button>
+    <button onclick="seed(this, 'visit-batch-baseline.json', 'Baseline visits')">Record baseline visits</button>
+    <button onclick="seed(this, 'visit-batch-week4.json', 'Week 4 visits')">Record week 4 visits</button>
+    <pre class="out" id="out-3"></pre>
+  </div>
+
+  <div class="step">
+    <h2><span class="num">4</span>Watch the pipeline fire</h2>
+    <p>The listener's event log: notifications in, sdtm.oak transform runs
+       out. SDTM VS and DM land in the lake as CSV and Dataset-JSON.</p>
+    <button onclick="events(this)">Show subscription events</button>
+    <pre class="out" id="out-4"></pre>
+  </div>
+
+  <div class="step">
+    <h2><span class="num">5</span>Query the lake</h2>
+    <p>DuckDB SQL over the files in the lake. This is the Athena replacement,
+       with zero infrastructure.</p>
+    <textarea id="sql" rows="3">SELECT VISIT, VSTESTCD, round(avg(VSSTRESN),1) AS mean_value, count(*) AS n
+FROM read_csv_auto('/lake/sdtm/vs.csv')
+GROUP BY VISIT, VSTESTCD ORDER BY min(VISITNUM), VSTESTCD</textarea>
+    <button onclick="sql(this)">Run SQL</button>
+    <button class="copper" onclick="files(this)">List lake files</button>
+    <div id="out-5t"></div>
+    <pre class="out" id="out-5"></pre>
+  </div>
+
+  <div class="step">
+    <h2><span class="num">6</span>The sprinkle of AI</h2>
+    <p>Natural language in, NGSI-LD entity out. Construct proposes entities;
+       commit executes the proposal when the authority gate is enabled
+       (PNE_ADAPTIVE_EXECUTE). Uses the Anthropic API when a key is
+       configured; otherwise a deterministic offline stub.</p>
+    <textarea id="statement" rows="3">Participant P2201 completed the Week 8 visit at the Houston site on June 1st, 2026. Seated systolic blood pressure was 121 mmHg.</textarea>
+    <button onclick="construct(this)">Propose entity</button>
+    <pre class="out" id="out-6"></pre>
+  </div>
+
+</div>
+</main>
+<footer>
+  <div class="wrap">
+    Apache-2.0 · vocabulary from
+    <a href="https://github.com/scientixai/the-ontology-project">The Ontology Project</a>
+    · transform engine <a href="https://github.com/pharmaverse/sdtm.oak">sdtm.oak</a>
+    · broker <a href="https://github.com/ScorpioBroker/ScorpioBroker">NEC Scorpio</a> (in-memory profile)
+    · architecture inspired by the AWS Garnet Framework, built without it: no SQS, no S3, no Athena, no cloud.
+  </div>
+</footer>
+<script>
+const CTX_LINK = '<http://web:8080/context/pne-context.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"';
+
+async function call(el, outId, fn) {
+  const out = document.getElementById(outId);
+  el.classList.add('spin');
+  out.classList.remove('err');
+  try {
+    const result = await fn();
+    out.textContent = typeof result === 'string' ? result : JSON.stringify(result, null, 2);
+  } catch (err) {
+    out.classList.add('err');
+    out.textContent = String(err);
+  } finally {
+    el.classList.remove('spin');
+  }
+}
+
+async function jfetch(url, opts) {
+  const resp = await fetch(url, opts);
+  const text = await resp.text();
+  let body;
+  try { body = JSON.parse(text); } catch { body = text; }
+  if (!resp.ok) throw new Error(url + ' -> ' + resp.status + '\n' + (typeof body === 'string' ? body : JSON.stringify(body, null, 2)));
+  return body;
+}
+
+const loadStudy = (el) => call(el, 'out-1', () => jfetch('/api/usdm/load', {method: 'POST'}));
+const readStudy = (el) => call(el, 'out-1', () =>
+  jfetch('/api/broker/ngsi-ld/v1/entities/urn:ngsi-ld:Study:CARDIO-118', {
+    headers: {Accept: 'application/json', Link: CTX_LINK},
+  }));
+const project = (el) => call(el, 'out-2', () =>
+  jfetch('/api/projection/project', {method: 'POST', headers: {'Content-Type': 'application/json'}, body: '{}'}));
+
+const seed = (el, file, label) => call(el, 'out-3', async () => {
+  const result = await jfetch('/seed-with-provenance', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({batchFile: file}),
+  });
+  return label + ': upserted ' + result.count + ' entities with provenance (dataSource: ' + result.provenance.dataSource + ', dataLoader: ' + result.provenance.dataLoader + '). The subscription is firing; see step 4.';
+});
+
+const events = (el) => call(el, 'out-4', async () => {
+  const body = await jfetch('/api/subscriptions/events');
+  return body.events.slice(0, 12).map((e) => {
+    if (e.kind === 'notification')
+      return e.at + '  notification  ' + e.entities.map((x) => x.id.split(':').pop()).join(', ');
+    if (e.kind === 'transform-run')
+      return e.at + '  transform-run  status=' + e.status + '  ' + (e.outputs || []).join(', ');
+    return e.at + '  ' + e.kind + '  ' + (e.error || '');
+  }).join('\n') || 'no events yet - write some execution data in step 3';
+});
+
+const sql = (el) => call(el, 'out-5', async () => {
+  const body = await jfetch('/api/lake/sql', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({sql: document.getElementById('sql').value}),
+  });
+  const holder = document.getElementById('out-5t');
+  holder.innerHTML = '';
+  const table = document.createElement('table');
+  table.innerHTML = '<tr>' + body.columns.map((c) => '<th>' + c + '</th>').join('') + '</tr>' +
+    body.rows.map((r) => '<tr>' + r.map((v) => '<td>' + (v ?? '') + '</td>').join('') + '</tr>').join('');
+  holder.appendChild(table);
+  return body.rows.length + ' row(s)';
+});
+const files = (el) => call(el, 'out-5', async () => {
+  const body = await jfetch('/api/lake/files');
+  document.getElementById('out-5t').innerHTML = '';
+  return body.files.map((f) => f.path.padEnd(36) + f.bytes + ' bytes').join('\n') || 'lake is empty';
+});
+
+const construct = (el) => call(el, 'out-6', () =>
+  jfetch('/api/adaptive/construct', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({statement: document.getElementById('statement').value}),
+  }));
+
+async function health() {
+  const row = document.getElementById('status-row');
+  row.innerHTML = '';
+  const services = [
+    ['broker', '/api/broker/q/health'], ['usdm', '/api/usdm/health'],
+    ['projection', '/api/projection/health'], ['subscriptions', '/api/subscriptions/health'],
+    ['transform', '/api/transform/health'], ['lake', '/api/lake/health'],
+    ['adaptive', '/api/adaptive/health'],
+  ];
+  for (const [name, url] of services) {
+    const pill = document.createElement('span');
+    pill.className = 'pill';
+    pill.textContent = name;
+    row.appendChild(pill);
+    fetch(url).then((r) => pill.classList.add(r.ok ? 'up' : 'down'))
+      .catch(() => pill.classList.add('down'));
+  }
+}
+health();
+setInterval(health, 15000);
+</script>
+</body>
+</html>

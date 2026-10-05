@@ -1,0 +1,174 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="How the Community Edition replaces SQS, S3, Athena, and Fargate with NGSI-LD subscriptions, a directory, DuckDB, and docker compose. One broker, a handful of services, a directory.">
+<meta name="theme-color" content="#131313">
+<title>Architecture · Scientix.AI Community Edition</title>
+<link rel="icon" href="assets/brand/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/brand/favicon.png" type="image/png" sizes="any">
+<link rel="stylesheet" href="style.css">
+<script>(function(){try{var m=localStorage.getItem("ce-mode");if(m==="dark"||m==="light")document.documentElement.setAttribute("data-mode",m);}catch(e){}})();</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header"><div class="wrap">
+  <a class="brand" href="index.html"><img src="assets/brand/scientix-ai-logo-inverse.svg" alt="Scientix.AI" width="494" height="77"><span class="edition">Community Edition</span></a>
+  <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Menu"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/></svg></button>
+  <nav class="site-nav" id="site-nav" aria-label="Site">
+    <a href="getting-started.html">Getting started</a>
+    <a href="architecture.html" aria-current="page">Architecture</a>
+    <a href="connectors.html">Connectors</a>
+    <a href="https://github.com/scientixai/community-edition">GitHub</a>
+  </nav>
+  <button class="mode-toggle" type="button" aria-label="Switch color mode"><svg class="sun" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1"/></svg><svg class="moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 10.2A6 6 0 0 1 5.8 2.5a6 6 0 1 0 7.7 7.7z"/></svg></button>
+</div></header>
+
+<main id="main"><div class="wrap doc">
+<article>
+<p class="crumbs"><a href="index.html">Community Edition</a> / Docs / Architecture</p>
+<h1>One broker, a handful of services, a directory</h1>
+<p class="summary">The whole stack is a compose file. Here is what runs, which port it listens on, and why none of it needs a cloud account.</p>
+
+<figure>
+<div class="mermaid-wrap" id="arch-diagram" role="img" aria-label="Service diagram: the web service on port 8080 serves the JSON-LD context and proxies to every service. The usdm and adaptive services write NGSI-LD entities to the Scorpio broker on port 9090, which posts notifications to the subscriptions service, which triggers the transform service. The projection and transform services read the broker and write Dataset-JSON and SDTM files to the lake directory. The lake service queries the directory with DuckDB. The optional bridge service moves files in and out with rclone."><pre class="mermaid-src">flowchart TB
+  web["web :8080&lt;br/&gt;walkthrough UI, context host, /api proxy"]
+  scorpio["Scorpio :9090&lt;br/&gt;NGSI-LD broker, in-memory, PostGIS"]
+  usdm["usdm :8101&lt;br/&gt;USDM to entities"]
+  adaptive["adaptive :8106&lt;br/&gt;NL statement to entity"]
+  subs["subscriptions :8103&lt;br/&gt;notification listener"]
+  transform["transform :8104&lt;br/&gt;sdtm.oak (R)"]
+  projection["projection :8102&lt;br/&gt;trial-design domains"]
+  lake["lake :8105&lt;br/&gt;DuckDB over files"]
+  bridge["bridge :8107&lt;br/&gt;rclone, optional"]
+  data[("lake/data&lt;br/&gt;filesystem")]
+
+  web -- "serves /context/pne-context.jsonld" --> scorpio
+  usdm -- "NGSI-LD entities" --> scorpio
+  adaptive -- "entities" --> scorpio
+  scorpio -- "notification POST" --> subs
+  subs -- "POST /run" --> transform
+  scorpio -. "reads" .-> projection
+  scorpio -. "reads" .-> transform
+  projection -- "Dataset-JSON" --> data
+  transform -- "SDTM CSV, Dataset-JSON" --> data
+  lake <-- "SQL" --> data
+  bridge <-- "pull, publish" --> data</pre></div>
+<div class="diagram" id="arch-fallback" hidden role="img" aria-label="Service diagram: the web service on port 8080 serves the JSON-LD context and proxies to every service. The usdm service writes NGSI-LD entities to the Scorpio broker on port 9090, which posts notifications to the subscriptions service, which triggers the transform service. The projection service reads the broker and writes Dataset-JSON to the lake directory. The adaptive service writes entities to the broker. The lake service queries the directory with DuckDB. The optional bridge service moves files in and out with rclone.">                 ┌─────────────────────────────────────────────────┐
+                 │                <b>web  :8080</b>                       │
+                 │  walkthrough UI · JSON-LD context host ·        │
+                 │  same-origin /api proxy to every service        │
+                 └───────┬─────────────────────────────────────────┘
+                         │ serves /context/pne-context.jsonld
+                         ▼
+┌──────────┐   NGSI-LD  ┌──────────────────┐   notification   ┌───────────────┐
+│  <b>usdm</b>    │──entities─▶│  <b>Scorpio :9090</b>   │─────POST────────▶│ <b>subscriptions</b> │
+│  :8101   │            │  in-memory       │                  │ :8103         │
+└──────────┘            │  all-in-one      │                  └──────┬────────┘
+                        │  + PostGIS       │                         │ POST /run
+┌──────────┐   reads    └──────────────────┘   reads                 ▼
+│<b>projection</b>│◀───────────────────┘  └─────────────────────▶┌───────────────┐
+│  :8102   │                                              │  <b>transform</b>    │
+└────┬─────┘            ┌──────────────────┐              │  :8104        │
+     │ Dataset-JSON     │  <b>adaptive :8106</b>  │              │  sdtm.oak (R) │
+     ▼                  │  NL -> entity    │──entities──▶ └──────┬────────┘
+┌─────────────────┐     │  API or stub     │   (broker)          │ SDTM CSV +
+│  <b>lake/data</b>      │     └──────────────────┘                     │ Dataset-JSON
+│  (filesystem)   │◀─────────────────────────────────────────────┘
+│      ▲          │     ┌──────────────────┐
+│      │ DuckDB   │     │  <b>bridge :8107</b>    │  optional: rclone in/out
+│  <b>lake :8105</b>     │◀───▶│  connectors      │  (GDrive, OneDrive, WebDAV,
+└─────────────────┘     └──────────────────┘   S3, SFTP, ...)</div>
+<figcaption>Every arrow is an HTTP request on localhost. No queue, no bucket, no serverless function.</figcaption>
+</figure>
+
+<table class="services">
+  <thead><tr><th scope="col">Service</th><th scope="col">Port</th><th scope="col">Role</th></tr></thead>
+  <tbody>
+  <tr><td>web</td><td>8080</td><td>Walkthrough UI, JSON-LD context host, same-origin proxy to every service.</td></tr>
+  <tr><td>scorpio</td><td>9090</td><td>NEC Scorpio NGSI-LD broker, upstream image, in-memory profile, PostGIS behind it.</td></tr>
+  <tr><td>usdm</td><td>8101</td><td>Turns a USDM-style study definition into broker entities.</td></tr>
+  <tr><td>projection</td><td>8102</td><td>Reads broker state, writes Dataset-JSON trial-design domains to the lake.</td></tr>
+  <tr><td>subscriptions</td><td>8103</td><td>Receives broker notifications and triggers a transform run.</td></tr>
+  <tr><td>transform</td><td>8104</td><td>sdtm.oak in R. Regenerates SDTM from current broker state.</td></tr>
+  <tr><td>lake</td><td>8105</td><td>Three HTTP endpoints over a directory; DuckDB for SQL.</td></tr>
+  <tr><td>adaptive</td><td>8106</td><td>Natural-language statement to entity proposal. Model call or offline stub.</td></tr>
+  <tr><td>bridge</td><td>8107</td><td>Optional rclone connectors, in and out. Off by default.</td></tr>
+  </tbody>
+</table>
+
+<h2 id="broker">The broker never needed the cloud</h2>
+<p>NEC Scorpio ships its messaging layer as first-class build variants, visible in its release tags: <code>-java</code> (in-memory), <code>-kafka</code>, <code>-sqs</code>, <code>-amqp</code>, <code>-mqtt</code>. The in-memory build runs every broker service in one JVM with in-process channels. The AWS coupling in Garnet-style deployments came from choosing the <code>-sqs</code> variant to span Fargate containers; it was packaging, not a broker requirement. This stack runs the upstream image, unmodified.</p>
+
+<h2 id="replacements">Three replacements</h2>
+<p><strong>Subscriptions instead of SQS/SNS.</strong> One NGSI-LD subscription covers the execution entity types. The broker POSTs notifications straight to a listener; bursts coalesce into a single idempotent transform run that regenerates SDTM from current broker state.</p>
+<p><strong>A directory instead of S3, DuckDB instead of Athena.</strong> Everything the pipeline produces is a file you can open: Dataset-JSON design domains, raw EDC-style extracts, SDTM datasets. DuckDB gives SQL over those files with zero infrastructure.</p>
+<p><strong>Compose instead of Fargate.</strong> Single node is the point. Five of the seven services are standard-library Python and build with no network access at all.</p>
+
+<h2 id="lake">Swapping the lake</h2>
+<p>The lake sits behind a deliberately small contract: writers drop files, readers use three HTTP endpoints. That makes it the natural place to diverge for production: keep the files and add Postgres as a query replica, sync to S3 and query with Athena, or run Trino, ClickHouse, or MinIO. Recipes with the exact steps are in <a href="https://github.com/scientixai/community-edition/blob/main/docs/lake-alternatives.md">docs/lake-alternatives.md</a>.</p>
+
+<h2 id="vocabulary">The vocabulary is a plugin</h2>
+<p>Entities are typed with the cr-domain of <a href="https://github.com/scientixai/the-ontology-project">The Ontology Project</a>: an open, provenance-native reference model for the clinical-research lifecycle, the first anchored T.O.P. domain. Nothing in the engine is clinical-specific: the broker is standard NGSI-LD, the context is a served JSON-LD file, and the projections are readers of broker state. Anchoring another domain (healthcare delivery, commercialization, claims, manufacturing, supply chain) means a new vocabulary and new projections over the same architecture. The NGSI-LD context is vendored and served locally, so the whole stack runs with no internet access.</p>
+
+<h2 id="adaptive">Adaptive layer in this stack</h2>
+<p>The adaptive service turns a natural-language clinical statement into an NGSI-LD entity proposal. <code>POST /construct</code> proposes entities; <code>POST /commit</code> executes only when the <code>PNE_ADAPTIVE_EXECUTE</code> gate is enabled, and every commit attempt keeps a local decision record. With an API key it calls the model once; without one it uses a deterministic offline stub. Broker-native temporal queries cover provenance and time for entities this stack writes.</p>
+<nav class="doc-nav" aria-label="Pages"><a href="getting-started.html"><small>Previous</small>Getting started</a><a class="next" href="connectors.html"><small>Next</small>Connectors</a></nav>
+</article>
+<aside class="toc" aria-label="On this page"><b>On this page</b><ol><li><a href="#broker">The broker never needed the cloud</a></li><li><a href="#replacements">Three replacements</a></li><li><a href="#lake">Swapping the lake</a></li><li><a href="#vocabulary">The vocabulary is a plugin</a></li><li><a href="#adaptive">Adaptive layer</a></li></ol></aside>
+</div></main>
+<footer class="site-footer"><div class="wrap">
+  <div class="top">
+    <div>
+      <a class="brand" href="https://scientix.ai"><img src="assets/brand/scientix-ai-logo-inverse.svg" alt="Scientix.AI" width="494" height="77"></a>
+      <p class="tagline">Architecting the future of healthcare</p>
+    </div>
+    <nav aria-label="Footer">
+      <div><b>Docs</b>
+        <a href="getting-started.html">Getting started</a>
+        <a href="architecture.html">Architecture</a>
+        <a href="connectors.html">Connectors</a></div>
+      <div><b>Project</b>
+        <a href="https://github.com/scientixai/community-edition">Source on GitHub</a>
+        <a href="https://github.com/scientixai/community-edition/blob/main/docs/licensing.md">Licensing</a>
+        <a href="https://github.com/scientixai/community-edition/blob/main/TRADEMARKS.md">Trademark policy</a></div>
+      <div><b>Company</b>
+        <a href="https://scientix.ai">About Us</a>
+        <a href="https://top.scientix.ai">The Ontology Project</a></div>
+    </nav>
+  </div>
+  <p class="legal">Provenance Neural Engine&trade; Community Edition. Copyright 2026 Scientix.AI. Code under Apache-2.0. "Provenance Neural Engine" and "PNE" are trademarks of Scientix.AI; the Apache license grants no trademark rights.</p>
+</div></footer>
+<script src="site.js"></script>
+<script type="module">
+import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+const wrap = document.getElementById("arch-diagram");
+const fallback = document.getElementById("arch-fallback");
+const source = wrap.querySelector(".mermaid-src").textContent;
+const root = document.documentElement;
+const lightQuery = window.matchMedia("(prefers-color-scheme: light)");
+const isDark = () => (root.getAttribute("data-mode") || (lightQuery.matches ? "light" : "dark")) === "dark";
+const themes = {
+  dark:  { background: "#0b0b0b", primaryColor: "#1c1b1b", primaryTextColor: "#e5e2e1", primaryBorderColor: "#3a494b", lineColor: "#00dbe7", secondaryColor: "#2a2a2a", tertiaryColor: "#131313", edgeLabelBackground: "#0b0b0b", fontFamily: "Be Vietnam Pro, system-ui, sans-serif", fontSize: "14px" },
+  light: { background: "#ffffff", primaryColor: "#ffffff", primaryTextColor: "#191c1c", primaryBorderColor: "#c3cbca", lineColor: "#00838c", secondaryColor: "#f4f4ed", tertiaryColor: "#fbfbf6", edgeLabelBackground: "#ffffff", fontFamily: "Be Vietnam Pro, system-ui, sans-serif", fontSize: "14px" }
+};
+let seq = 0;
+async function draw() {
+  try {
+    mermaid.initialize({ startOnLoad: false, securityLevel: "strict", theme: "base", themeVariables: themes[isDark() ? "dark" : "light"], flowchart: { curve: "basis", padding: 16, nodeSpacing: 40, rankSpacing: 48, useMaxWidth: true } });
+    const { svg } = await mermaid.render("arch-svg-" + (++seq), source);
+    wrap.innerHTML = svg;
+    wrap.hidden = false; fallback.hidden = true;
+  } catch (err) {
+    console.error("Mermaid render failed; showing text diagram.", err);
+    wrap.hidden = true; fallback.hidden = false;
+  }
+}
+new MutationObserver(draw).observe(root, { attributes: true, attributeFilter: ["data-mode"] });
+lightQuery.addEventListener("change", draw);
+draw();
+</script>
+
+</body>
+</html>

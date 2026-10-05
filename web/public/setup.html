@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Setup - PNE Community Edition</title>
+<style>
+  :root {
+    --surface: #131313; --surface-low: #1c1b1b; --surface-high: #2a2a2a;
+    --on-surface: #e5e2e1; --muted: #b9cacb; --outline: #3a494b;
+    --teal: #00dbe7; --teal-dim: #006a71; --copper: #ffb77b;
+    --cream: #f9f9e0; --error: #ffb4ab; --ok: #9be8a5;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--surface); color: var(--on-surface);
+         font: 15px/1.55 "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif; }
+  header { padding: 2rem 1.5rem 1.2rem; border-bottom: 1px solid var(--outline);
+           background: linear-gradient(180deg, #0e0e0e, var(--surface)); }
+  .wrap { max-width: 880px; margin: 0 auto; }
+  h1 { margin: 0 0 .3rem; font-size: 1.4rem; font-weight: 600; }
+  h1 span { color: var(--teal); }
+  header p { margin: .2rem 0 0; color: var(--muted); }
+  header a { color: var(--teal); }
+  main { padding: 1.5rem; }
+  .step { background: var(--surface-low); border: 1px solid var(--outline);
+          border-radius: 10px; margin-bottom: 1.1rem; padding: 1.1rem 1.25rem; }
+  .step h2 { margin: 0 0 .35rem; font-size: 1rem; font-weight: 600; }
+  .step h2 .num { display: inline-block; width: 1.6rem; height: 1.6rem;
+    line-height: 1.6rem; text-align: center; margin-right: .55rem;
+    border-radius: 50%; background: var(--teal-dim); color: var(--cream);
+    font-size: .85rem; }
+  .step p { margin: .25rem 0 .8rem; color: var(--muted); font-size: .92rem; }
+  button { background: transparent; color: var(--teal);
+    border: 1px solid var(--teal-dim); border-radius: 7px;
+    padding: .42rem .95rem; font: inherit; font-size: .9rem; cursor: pointer;
+    margin: 0 .5rem .5rem 0; }
+  button:hover { background: rgba(0,219,231,.08); }
+  button.copper { color: var(--copper); border-color: #7a4100; }
+  input, select { background: #0e0e0e; color: var(--on-surface);
+    border: 1px solid var(--outline); border-radius: 7px;
+    padding: .45rem .6rem; font: .88rem ui-monospace, Menlo, monospace;
+    margin: 0 .5rem .5rem 0; min-width: 220px; }
+  label { display: inline-block; min-width: 150px; color: var(--muted); font-size: .88rem; }
+  .row { margin-bottom: .1rem; }
+  pre.out { background: #0e0e0e; border: 1px solid var(--outline);
+    border-radius: 7px; padding: .7rem .9rem; overflow: auto; max-height: 280px;
+    font: .8rem/1.5 ui-monospace, Menlo, monospace; color: var(--cream);
+    white-space: pre-wrap; word-break: break-word; }
+  pre.out:empty { display: none; }
+  pre.out.err { color: var(--error); }
+  code { background: var(--surface-high); border-radius: 4px; padding: .08rem .35rem; font-size: .85em; }
+  .pill { font-size: .78rem; padding: .18rem .7rem; border-radius: 999px;
+    border: 1px solid var(--outline); color: var(--muted); margin: 0 .35rem .35rem 0;
+    display: inline-block; }
+  .pill.up { border-color: var(--teal-dim); color: var(--teal); }
+  .pill.down { border-color: #5c2b29; color: var(--error); }
+  .hint { font-size: .84rem; color: var(--muted); }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>First-run setup <span>wizard</span></h1>
+    <p>Four steps, all optional. When you are done, the
+       <a href="/">walkthrough</a> shows the pipeline end to end.</p>
+  </div>
+</header>
+<main>
+<div class="wrap">
+
+  <div class="step">
+    <h2><span class="num">1</span>Service health</h2>
+    <p>Everything below should turn teal within a minute of
+       <code>docker compose up -d</code>. The broker (a JVM) is the slow one.</p>
+    <div id="health-row"></div>
+    <pre class="out" id="out-h"></pre>
+  </div>
+
+  <div class="step">
+    <h2><span class="num">2</span>Demo data</h2>
+    <p>Seed the bundled CARDIO-118 study to see the pipeline work, or skip
+       and load your own USDM definition (via <code>POST /api/usdm/load</code>
+       or a connector inbox in step 4).</p>
+    <button onclick="seedDemo(this)">Seed the demo study</button>
+    <button class="copper" onclick="out('out-d', 'Skipped. Load your own study definition when ready.')">Start empty</button>
+    <pre class="out" id="out-d"></pre>
+  </div>
+
+  <div class="step">
+    <h2><span class="num">3</span>AI layer</h2>
+    <p>The adaptive service turns natural language into broker entities. It
+       runs keyless in deterministic stub mode; with an Anthropic API key it
+       handles free-form statements.</p>
+    <button onclick="checkMode(this)">Check current mode</button>
+    <p class="hint">To enable the real model: put
+       <code>ANTHROPIC_API_KEY=sk-ant-...</code> in a <code>.env</code> file
+       next to <code>docker-compose.yaml</code>, then
+       <code>docker compose up -d adaptive</code>.</p>
+    <pre class="out" id="out-a"></pre>
+  </div>
+
+  <div class="step">
+    <h2><span class="num">4</span>Connectors (optional)</h2>
+    <p>Pull study definitions in from, and publish SDTM outputs to, remote
+       storage: WebDAV, S3, SFTP, FTP configure right here; Google Drive and
+       OneDrive need one OAuth step in the terminal (below). Powered by a
+       single rclone bridge, disabled by default.</p>
+    <div id="bridge-off" style="display:none">
+      <p class="hint">The bridge is not running. Enable it with:<br>
+      <code>docker compose --profile connectors up -d</code>, then reload
+      this page.</p>
+    </div>
+    <div id="bridge-on" style="display:none">
+      <div class="row"><label>Remote name</label><input id="c-name" placeholder="sitehub"></div>
+      <div class="row"><label>Backend</label>
+        <select id="c-type" onchange="renderParams()">
+          <option value="webdav">webdav</option>
+          <option value="s3">s3</option>
+          <option value="sftp">sftp</option>
+          <option value="ftp">ftp</option>
+        </select>
+      </div>
+      <div id="c-params"></div>
+      <button onclick="createRemote(this)">Create remote</button>
+      <button onclick="listRemotes(this)">List remotes</button>
+      <div class="row" style="margin-top:.6rem">
+        <label>Use remote</label><input id="c-remote" placeholder="sitehub">
+        <label>Remote path</label><input id="c-path" placeholder="(optional)">
+      </div>
+      <button onclick="checkRemote(this)">Test connection</button>
+      <button onclick="pull(this)">Pull inbox and ingest</button>
+      <button class="copper" onclick="publish(this)">Publish lake outputs</button>
+      <p class="hint">Google Drive / OneDrive: run
+        <code>docker compose --profile connectors exec bridge rclone config</code>
+        for the guided OAuth flow (or paste a token from
+        <code>rclone authorize drive</code> on your workstation). The remote
+        then appears in the list above and works with pull and publish.</p>
+    </div>
+    <pre class="out" id="out-c"></pre>
+  </div>
+
+  <div class="step">
+    <h2><span class="num">&#10003;</span>Done</h2>
+    <p>Head to the <a href="/">walkthrough</a> to watch a study flow from
+       authoring to SDTM, or query the lake straight away.</p>
+  </div>
+
+</div>
+</main>
+<script>
+const PARAM_FIELDS = {
+  webdav: [["url", "https://dav.example.com/remote.php/dav"], ["vendor", "other"], ["user", ""], ["pass", ""]],
+  s3: [["provider", "AWS"], ["access_key_id", ""], ["secret_access_key", ""], ["endpoint", "(blank for AWS, or e.g. http://minio:9000)"], ["region", "us-east-1"]],
+  sftp: [["host", ""], ["user", ""], ["pass", ""], ["port", "22"]],
+  ftp: [["host", ""], ["user", ""], ["pass", ""], ["port", "21"]],
+};
+
+function out(id, text, isError) {
+  const el = document.getElementById(id);
+  el.classList.toggle('err', !!isError);
+  el.textContent = typeof text === 'string' ? text : JSON.stringify(text, null, 2);
+}
+
+async function jfetch(url, opts) {
+  const resp = await fetch(url, opts);
+  const text = await resp.text();
+  let body; try { body = JSON.parse(text); } catch { body = text; }
+  if (!resp.ok) throw body && body.error ? new Error(body.error) : new Error(url + ' -> ' + resp.status);
+  return body;
+}
+const act = (el, id, fn) => fn().then((r) => out(id, r)).catch((e) => out(id, String(e), true));
+
+async function health() {
+  const row = document.getElementById('health-row');
+  row.innerHTML = '';
+  const services = ['broker|/api/broker/q/health', 'web|/health', 'usdm|/api/usdm/health',
+    'projection|/api/projection/health', 'subscriptions|/api/subscriptions/health',
+    'transform|/api/transform/health', 'lake|/api/lake/health', 'adaptive|/api/adaptive/health',
+    'bridge|/api/bridge/health'];
+  let bridgeUp = false;
+  await Promise.all(services.map(async (svc) => {
+    const [name, url] = svc.split('|');
+    const pill = document.createElement('span');
+    pill.className = 'pill'; pill.textContent = name;
+    row.appendChild(pill);
+    try {
+      const r = await fetch(url);
+      pill.classList.add(r.ok ? 'up' : 'down');
+      if (name === 'bridge' && r.ok) bridgeUp = true;
+    } catch { pill.classList.add('down'); }
+  }));
+  document.getElementById('bridge-on').style.display = bridgeUp ? 'block' : 'none';
+  document.getElementById('bridge-off').style.display = bridgeUp ? 'none' : 'block';
+}
+
+const seedDemo = (el) => act(el, 'out-d', async () => {
+  const r = await jfetch('/api/usdm/load', {method: 'POST'});
+  return 'Loaded ' + r.loaded + ' entities for the demo study. Continue in the walkthrough.';
+});
+const checkMode = (el) => act(el, 'out-a', async () => {
+  const m = await jfetch('/api/adaptive/mode');
+  return m.mode === 'anthropic'
+    ? 'Live model mode: ' + m.model
+    : 'Stub mode (offline, deterministic). Set ANTHROPIC_API_KEY for free-form statements.';
+});
+
+function renderParams() {
+  const type = document.getElementById('c-type').value;
+  const holder = document.getElementById('c-params');
+  holder.innerHTML = '';
+  for (const [key, placeholder] of PARAM_FIELDS[type]) {
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = '<label>' + key + '</label><input data-param="' + key + '" placeholder="' + placeholder + '">';
+    holder.appendChild(row);
+  }
+}
+const createRemote = (el) => act(el, 'out-c', () => {
+  const params = {};
+  document.querySelectorAll('#c-params input').forEach((i) => { if (i.value) params[i.dataset.param] = i.value; });
+  return jfetch('/api/bridge/remotes', {method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({name: document.getElementById('c-name').value,
+                          type: document.getElementById('c-type').value, params})});
+});
+const listRemotes = (el) => act(el, 'out-c', () => jfetch('/api/bridge/remotes'));
+const checkRemote = (el) => act(el, 'out-c', () => jfetch('/api/bridge/check', {
+  method: 'POST', headers: {'Content-Type': 'application/json'},
+  body: JSON.stringify({remote: document.getElementById('c-remote').value})}));
+const pull = (el) => act(el, 'out-c', () => jfetch('/api/bridge/pull', {
+  method: 'POST', headers: {'Content-Type': 'application/json'},
+  body: JSON.stringify({remote: document.getElementById('c-remote').value,
+                        path: document.getElementById('c-path').value})}));
+const publish = (el) => act(el, 'out-c', () => jfetch('/api/bridge/publish', {
+  method: 'POST', headers: {'Content-Type': 'application/json'},
+  body: JSON.stringify({remote: document.getElementById('c-remote').value,
+                        path: document.getElementById('c-path').value || 'pne-lake'})}));
+
+renderParams();
+health();
+setInterval(health, 15000);
+</script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "pne-ce-broker": {
+      "command": "python3",
+      "args": ["/path/to/community-edition/mcp/server.py"],
+      "env": {
+        "BROKER": "http://127.0.0.1:19091"
+      }
+    }
+  }
+}

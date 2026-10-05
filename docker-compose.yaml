@@ -1,0 +1,214 @@
+# Provenance Neural Engine - Community Edition
+#
+# One command brings up the whole stack on a laptop, with no cloud
+# dependency of any kind:
+#
+#   docker compose up -d --build
+#
+# Broker: NEC Scorpio's upstream in-memory all-in-one build. Scorpio ships
+# its messaging layer as first-class build variants (the -java / -kafka /
+# -sqs / -amqp / -mqtt release suffixes); this is the -java one, which runs
+# every broker service in one JVM with in-process channels and needs no
+# external message bus. Inspired by the shape of the AWS Garnet Framework
+# (an NGSI-LD broker fronting a CDISC pipeline) but not built on it: no
+# Garnet images, no CDK, no SQS/SNS, no S3, no Athena.
+
+name: pne-community-edition
+
+services:
+  scorpio-postgres:
+    # imresamu/postgis instead of postgis/postgis: the official image
+    # publishes amd64 only; this community build is multiarch, so it runs
+    # natively on Apple Silicon instead of under emulation.
+    image: imresamu/postgis:16-3.4
+    environment:
+      POSTGRES_USER: ngb
+      POSTGRES_PASSWORD: ${SCORPIO_PG_PASSWORD:-ngb}
+      POSTGRES_DB: ngb
+    volumes:
+      - scorpio-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ngb"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  scorpio:
+    image: ${PNE_SCORPIO_IMAGE:-scorpiobroker/all-in-one-runner:java-6.0.1}
+    # Upstream Scorpio images publish amd64 only. On Apple Silicon, Docker
+    # Desktop runs this under Rosetta; enable "Use Rosetta for x86_64/amd64
+    # emulation" in Docker Desktop settings if startup is slow.
+    platform: linux/amd64
+    depends_on:
+      scorpio-postgres:
+        condition: service_healthy
+    environment:
+      DBHOST: scorpio-postgres
+      DBPORT: "5432"
+      DBNAME: ngb
+      DBUSER: ngb
+      DBPASS: ${SCORPIO_PG_PASSWORD:-ngb}
+    ports:
+      - "9090:9090"
+    # No container healthcheck: the Scorpio images do not reliably ship
+    # curl or wget. Verify readiness from the host instead:
+    #   curl -i "http://localhost:9090/q/health"
+
+  # Serves the walkthrough UI, the JSON-LD context (the broker dereferences
+  # it from here), and a same-origin proxy to every service so the browser
+  # needs no CORS setup.
+  web:
+    image: ghcr.io/scientixai/pne-ce-web:${PNE_VERSION:-0.1.0}
+    build:
+      context: .
+      dockerfile: web/Dockerfile
+    depends_on:
+      - scorpio
+    environment:
+      PNE_BROKER_URL: http://scorpio:9090
+      PNE_USDM_URL: http://usdm:8101
+      PNE_PROJECTION_URL: http://projection:8102
+      PNE_SUBSCRIPTIONS_URL: http://subscriptions:8103
+      PNE_TRANSFORM_URL: http://transform:8104
+      PNE_LAKE_URL: http://lake:8105
+      PNE_ADAPTIVE_URL: http://adaptive:8106
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request as u; u.urlopen('http://localhost:8080/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  # USDM study definition authoring / ingest: accepts a USDM-style study
+  # definition and loads it into the broker as NGSI-LD entities.
+  usdm:
+    image: ghcr.io/scientixai/pne-ce-usdm:${PNE_VERSION:-0.1.0}
+    build:
+      context: ./pipeline
+      dockerfile: usdm/Dockerfile
+    depends_on:
+      - scorpio
+      - web
+    environment:
+      PNE_BROKER_URL: http://scorpio:9090
+      PNE_CONTEXT_URL: http://web:8080/context/pne-context.jsonld
+    ports:
+      - "8101:8101"
+
+  # USDM -> Dataset-JSON projection: reads study design state from the
+  # broker and writes SDTM trial-design domains (TS, TA, TI, TV) to the
+  # lake via the lake service write API.
+  projection:
+    image: ghcr.io/scientixai/pne-ce-projection:${PNE_VERSION:-0.1.0}
+    build:
+      context: ./pipeline
+      dockerfile: projection/Dockerfile
+    depends_on:
+      - scorpio
+      - web
+      - lake
+    environment:
+      PNE_BROKER_URL: http://scorpio:9090
+      PNE_CONTEXT_URL: http://web:8080/context/pne-context.jsonld
+      PNE_LAKE_URL: http://lake:8105
+    ports:
+      - "8102:8102"
+
+  # The SQS/SNS replacement: registers an NGSI-LD subscription on the
+  # broker; the broker POSTs notifications here, and this listener triggers
+  # the transform. No queue, no cloud.
+  subscriptions:
+    image: ghcr.io/scientixai/pne-ce-subscriptions:${PNE_VERSION:-0.1.0}
+    build:
+      context: ./pipeline
+      dockerfile: subscriptions/Dockerfile
+    depends_on:
+      - scorpio
+      - web
+    environment:
+      PNE_BROKER_URL: http://scorpio:9090
+      PNE_CONTEXT_URL: http://web:8080/context/pne-context.jsonld
+      PNE_NOTIFY_URL: http://subscriptions:8103/notify
+      PNE_TRANSFORM_URL: http://transform:8104
+    ports:
+      - "8103:8103"
+
+  # sdtm.oak transformation microservice: on notification, pulls raw
+  # execution data from the broker and runs a CDISC sdtm.oak (R)
+  # transformation producing SDTM datasets into the lake via the lake
+  # service write API.
+  transform:
+    image: ghcr.io/scientixai/pne-ce-transform:${PNE_VERSION:-0.1.0}
+    build:
+      context: ./pipeline
+      dockerfile: transform/Dockerfile
+    depends_on:
+      - scorpio
+      - web
+      - lake
+    environment:
+      PNE_BROKER_URL: http://scorpio:9090
+      PNE_CONTEXT_URL: http://web:8080/context/pne-context.jsonld
+      PNE_LAKE_URL: http://lake:8105
+    ports:
+      - "8104:8104"
+
+  # Lake storage and query: owns all writes to the lake directory and
+  # provides DuckDB SQL over the stored files.
+  lake:
+    image: ghcr.io/scientixai/pne-ce-lake:${PNE_VERSION:-0.1.0}
+    build: ./lake
+    environment:
+      PNE_LAKE_DIR: /lake
+    volumes:
+      - ./lake/data:/lake
+    ports:
+      - "8105:8105"
+
+  # The sprinkle of AI: natural language in, NGSI-LD entity out. Proposes
+  # entities; execution gated by PNE_ADAPTIVE_EXECUTE (default deny). Uses
+  # the Anthropic API when ANTHROPIC_API_KEY is set; falls back to a
+  # deterministic offline stub otherwise.
+  adaptive:
+    image: ghcr.io/scientixai/pne-ce-adaptive:${PNE_VERSION:-0.1.0}
+    build:
+      context: .
+      dockerfile: adaptive/Dockerfile
+    depends_on:
+      - scorpio
+      - web
+    environment:
+      PNE_BROKER_URL: http://scorpio:9090
+      PNE_CONTEXT_URL: http://web:8080/context/pne-context.jsonld
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      PNE_ADAPTIVE_MODEL: ${PNE_ADAPTIVE_MODEL:-claude-opus-4-8}
+      PNE_STUDY_ID: ${PNE_STUDY_ID:-CARDIO-118}
+      PNE_ADAPTIVE_EXECUTE: ${PNE_ADAPTIVE_EXECUTE:-}
+    volumes:
+      - adaptive-decisions:/adaptive-decisions
+    ports:
+      - "8106:8106"
+
+  # Optional connector bridge (rclone): pull study definitions in from and
+  # publish lake outputs to Google Drive, OneDrive, WebDAV, S3, SFTP, and
+  # any other rclone backend. Off by default so the core stack stays fully
+  # offline; enable with:  docker compose --profile connectors up -d
+  bridge:
+    image: ghcr.io/scientixai/pne-ce-bridge:${PNE_VERSION:-0.1.0}
+    build: ./bridge
+    profiles: ["connectors"]
+    depends_on:
+      - lake
+    environment:
+      PNE_LAKE_URL: http://lake:8105
+      PNE_USDM_URL: http://usdm:8101
+    volumes:
+      - bridge-config:/config
+    ports:
+      - "8107:8107"
+
+volumes:
+  scorpio-pgdata:
+  bridge-config:
+  adaptive-decisions:

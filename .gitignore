@@ -1,0 +1,19 @@
+# Lake contents are produced by the running pipeline
+lake/data/*
+!lake/data/.gitkeep
+
+# Local environment
+.env
+
+# Python
+__pycache__/
+*.pyc
+
+# Corporate proxy CA certificates dropped in for local builds
+pipeline/transform/build-support/ca/*.crt
+pipeline/transform/build-support/ca/*.pem
+lake/build-support/ca/*.crt
+lake/build-support/ca/*.pem
+
+# macOS
+.DS_Store

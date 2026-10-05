@@ -1,0 +1,70 @@
+# NR-010 blackhole overlay for proving no-phone-home runtime egress
+#
+# This overlay maps external domains to 127.0.0.1 to verify that the CE
+# stack runs with no outbound connections to uri.etsi.org, top.scientix.ai,
+# w3id.org, or schema.org during normal load and query operations.
+#
+# Usage:
+#   docker compose -f docker-compose.yaml -f docker-compose.nr010-blackhole.yml up -d
+#
+# This is a prove-only overlay. Normal users should continue using the
+# default docker-compose.yaml without this overlay.
+
+name: pne-community-edition
+
+services:
+  scorpio:
+    extra_hosts:
+      - "uri.etsi.org:127.0.0.1"
+      - "top.scientix.ai:127.0.0.1"
+      - "w3id.org:127.0.0.1"
+      - "schema.org:127.0.0.1"
+
+  web:
+    extra_hosts:
+      - "uri.etsi.org:127.0.0.1"
+      - "top.scientix.ai:127.0.0.1"
+      - "w3id.org:127.0.0.1"
+      - "schema.org:127.0.0.1"
+
+  usdm:
+    extra_hosts:
+      - "uri.etsi.org:127.0.0.1"
+      - "top.scientix.ai:127.0.0.1"
+      - "w3id.org:127.0.0.1"
+      - "schema.org:127.0.0.1"
+
+  projection:
+    extra_hosts:
+      - "uri.etsi.org:127.0.0.1"
+      - "top.scientix.ai:127.0.0.1"
+      - "w3id.org:127.0.0.1"
+      - "schema.org:127.0.0.1"
+
+  subscriptions:
+    extra_hosts:
+      - "uri.etsi.org:127.0.0.1"
+      - "top.scientix.ai:127.0.0.1"
+      - "w3id.org:127.0.0.1"
+      - "schema.org:127.0.0.1"
+
+  transform:
+    extra_hosts:
+      - "uri.etsi.org:127.0.0.1"
+      - "top.scientix.ai:127.0.0.1"
+      - "w3id.org:127.0.0.1"
+      - "schema.org:127.0.0.1"
+
+  lake:
+    extra_hosts:
+      - "uri.etsi.org:127.0.0.1"
+      - "top.scientix.ai:127.0.0.1"
+      - "w3id.org:127.0.0.1"
+      - "schema.org:127.0.0.1"
+
+  adaptive:
+    extra_hosts:
+      - "uri.etsi.org:127.0.0.1"
+      - "top.scientix.ai:127.0.0.1"
+      - "w3id.org:127.0.0.1"
+      - "schema.org:127.0.0.1"

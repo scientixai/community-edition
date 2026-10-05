@@ -1,0 +1,37 @@
+# Publishes site/ to GitHub Pages. Pages cannot serve a subfolder directly,
+# so this workflow uploads site/ as the Pages artifact. Enable it once in
+# the repo settings: Pages -> Source -> GitHub Actions.
+name: Publish site
+
+on:
+  push:
+    branches: [main]
+    paths: ["site/**", ".github/workflows/publish-site.yml"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    # GitHub Pages is unavailable on private repositories under the org's
+    # free plan. Skip cleanly until the repo is public; runs normally after.
+    if: ${{ !github.event.repository.private }}
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+      - id: deployment
+        uses: actions/deploy-pages@v4

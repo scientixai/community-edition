@@ -1,0 +1,848 @@
+openapi: 3.1.0
+info:
+  title: Scientix.AI Community Edition HTTP API
+  summary: Versioned HTTP contracts for Community Edition runtime services
+  description: |
+    Published HTTP contracts for the Community Edition services that speak
+    JSON over HTTP on a local Compose stack.
+
+    **API version.** This document describes **API version 1**
+    (`x-api-version: "1"`). Compatibility rules live in
+    `docs/contracts.md`.
+
+    **How to call.** Paths below are shown as served by the web same-origin
+    proxy (`http://localhost:8080`): `/api/<service>/<path>`. The same
+    `<path>` is available on each service's direct port (for example
+    `POST http://localhost:8105/objects` for the lake). Direct ports are
+    listed under each tag.
+
+    **Version pinning.** Clients may send `X-API-Version: 1` to pin
+    this contract. The runtime currently serves the v1 surface whether or
+    not the header is present.
+  version: "1.0.0"
+  x-api-version: "1"
+  license:
+    name: Apache-2.0
+    identifier: Apache-2.0
+
+servers:
+  - url: http://localhost:8080
+    description: Web UI and same-origin /api proxy (host port 8080; use 18080 with the local overlay)
+  - url: http://127.0.0.1:8080
+    description: Loopback alias for the web proxy
+
+tags:
+  - name: web
+    description: Walkthrough UI host and /api proxy (container port 8080)
+  - name: lake
+    description: Lake write and DuckDB query (direct port 8105; proxy /api/lake)
+  - name: usdm
+    description: USDM study ingest (direct port 8101; proxy /api/usdm)
+  - name: projection
+    description: Trial-design Dataset-JSON projection (direct port 8102; proxy /api/projection)
+  - name: subscriptions
+    description: NGSI-LD notification listener (direct port 8103; proxy /api/subscriptions)
+  - name: transform
+    description: sdtm.oak transform wrapper (direct port 8104; proxy /api/transform)
+  - name: adaptive
+    description: Natural-language construct and gated commit (direct port 8106; proxy /api/adaptive)
+  - name: bridge
+    description: rclone connector bridge (direct port 8107; proxy /api/bridge)
+
+paths:
+  /health:
+    get:
+      tags: [web]
+      operationId: webHealth
+      summary: Web service health
+      responses:
+        "200":
+          description: Service is up
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+
+  /api/lake/health:
+    get:
+      tags: [lake]
+      operationId: lakeHealth
+      summary: Lake health
+      responses:
+        "200":
+          description: Lake is up
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+
+  /api/lake/files:
+    get:
+      tags: [lake]
+      operationId: lakeListFiles
+      summary: List files in the lake
+      responses:
+        "200":
+          description: Lake file listing
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [lake, files]
+                properties:
+                  lake:
+                    type: string
+                    description: Absolute lake directory path inside the container
+                  files:
+                    type: array
+                    items:
+                      type: object
+                      required: [path, bytes]
+                      properties:
+                        path: { type: string }
+                        bytes: { type: integer }
+
+  /api/lake/file:
+    get:
+      tags: [lake]
+      operationId: lakeGetFile
+      summary: Fetch one lake file
+      parameters:
+        - name: path
+          in: query
+          required: true
+          schema: { type: string }
+          description: Relative path within the lake directory
+      responses:
+        "200":
+          description: Raw file bytes
+          content:
+            application/json:
+              schema: { type: string }
+            text/plain:
+              schema: { type: string }
+        "404":
+          description: File not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/lake/samples:
+    get:
+      tags: [lake]
+      operationId: lakeSamples
+      summary: Sample DuckDB queries over lake files
+      responses:
+        "200":
+          description: Sample query list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  samples:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        label: { type: string }
+                        sql: { type: string }
+
+  /api/lake/objects:
+    post:
+      tags: [lake]
+      operationId: lakeWriteObject
+      summary: Write one file into the lake
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [path, content]
+              properties:
+                path:
+                  type: string
+                  description: Relative path within the lake (no traversal)
+                content:
+                  description: File content; objects and arrays are stored as JSON text
+                  oneOf:
+                    - type: string
+                    - type: object
+                      additionalProperties: true
+                    - type: array
+                      items: true
+                provenance:
+                  type: object
+                  description: Optional provenance metadata (stored as .pne-provenance sidecar)
+                  properties:
+                    source:
+                      type: string
+                      description: Origin identifier (e.g., "broker-vitals-raw")
+                    loader:
+                      type: string
+                      description: Service that wrote the object (e.g., "transform-sdtm")
+                    time:
+                      type: string
+                      format: date-time
+                      description: ISO 8601 timestamp of the write
+      responses:
+        "200":
+          description: Write succeeded
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [path, bytes]
+                properties:
+                  path: { type: string }
+                  bytes: { type: integer }
+        "400":
+          description: Invalid path or content
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Write failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/lake/sql:
+    post:
+      tags: [lake]
+      operationId: lakeSql
+      summary: Run a DuckDB SQL query over lake files
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [sql]
+              properties:
+                sql:
+                  type: string
+                  description: DuckDB SQL statement
+      responses:
+        "200":
+          description: Query result (rows truncated at 1000)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [columns, rows]
+                properties:
+                  columns:
+                    type: array
+                    items: { type: string }
+                  rows:
+                    type: array
+                    items:
+                      type: array
+                      items: true
+                  truncatedAt:
+                    type: [integer, "null"]
+        "400":
+          description: Missing SQL or query error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/usdm/health:
+    get:
+      tags: [usdm]
+      operationId: usdmHealth
+      summary: USDM service health
+      responses:
+        "200":
+          description: Service is up
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+
+  /api/usdm/seed:
+    get:
+      tags: [usdm]
+      operationId: usdmSeed
+      summary: Return the bundled seed USDM study definition
+      responses:
+        "200":
+          description: Seed study JSON
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /api/usdm/load:
+    post:
+      tags: [usdm]
+      operationId: usdmLoad
+      summary: Map a USDM-style study into broker entities
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              description: USDM-style study document; omit body to load the bundled seed
+              additionalProperties: true
+      responses:
+        "200":
+          description: Entities upserted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  loaded: { type: integer }
+                  brokerStatus: { type: integer }
+                  entityIds:
+                    type: array
+                    items: { type: string }
+
+  /api/projection/health:
+    get:
+      tags: [projection]
+      operationId: projectionHealth
+      summary: Projection service health
+      responses:
+        "200":
+          description: Service is up
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+
+  /api/projection/project:
+    post:
+      tags: [projection]
+      operationId: projectionProject
+      summary: Project study design entities to Dataset-JSON in the lake
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                studyId:
+                  type: string
+                  description: Study identifier; defaults to the stack study id
+      responses:
+        "200":
+          description: Projection written through the lake
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  studyId: { type: string }
+                  outputs:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+        "404":
+          description: Study not found in the broker
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/subscriptions/health:
+    get:
+      tags: [subscriptions]
+      operationId: subscriptionsHealth
+      summary: Subscriptions listener health
+      responses:
+        "200":
+          description: Service is up
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+
+  /api/subscriptions/notify:
+    post:
+      tags: [subscriptions]
+      operationId: subscriptionsNotify
+      summary: Accept an NGSI-LD notification and schedule a transform run
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                subscriptionId: { type: string }
+                data:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: true
+      responses:
+        "200":
+          description: Notification accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+
+  /api/subscriptions/events:
+    get:
+      tags: [subscriptions]
+      operationId: subscriptionsEvents
+      summary: Recent notification and transform events
+      responses:
+        "200":
+          description: Event log (newest first)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  events:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+
+  /api/subscriptions/subscription:
+    get:
+      tags: [subscriptions]
+      operationId: subscriptionsSubscription
+      summary: Read the pipeline subscription from the broker
+      responses:
+        "200":
+          description: Subscription document
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /api/transform/health:
+    get:
+      tags: [transform]
+      operationId: transformHealth
+      summary: Transform service health
+      responses:
+        "200":
+          description: Service is up
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+
+  /api/transform/status:
+    get:
+      tags: [transform]
+      operationId: transformStatus
+      summary: Last transform run status
+      responses:
+        "200":
+          description: Run counters
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /api/transform/run:
+    post:
+      tags: [transform]
+      operationId: transformRun
+      summary: Snapshot broker state and run the sdtm.oak mapping
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                studyId: { type: string }
+      responses:
+        "200":
+          description: Transform completed; outputs written through the lake
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /api/adaptive/health:
+    get:
+      tags: [adaptive]
+      operationId: adaptiveHealth
+      summary: Adaptive service health
+      responses:
+        "200":
+          description: Service is up
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Health"
+
+  /api/adaptive/mode:
+    get:
+      tags: [adaptive]
+      operationId: adaptiveMode
+      summary: Construction mode and execute gate
+      responses:
+        "200":
+          description: Mode flags
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mode:
+                    type: string
+                    description: anthropic when an API key is configured; otherwise stub
+                  model:
+                    type: [string, "null"]
+                  executeEnabled:
+                    type: boolean
+
+  /api/adaptive/construct:
+    post:
+      tags: [adaptive]
+      operationId: adaptiveConstruct
+      summary: Propose NGSI-LD entities from a clinical statement (never writes)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [statement]
+              properties:
+                statement:
+                  type: string
+      responses:
+        "200":
+          description: Proposal with constructed entities
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  mode: { type: string }
+                  proposalId: { type: string }
+                  entities:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+        "400":
+          description: Missing statement or unsupported parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "422":
+          description: Statement could not be constructed in stub mode
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/adaptive/commit:
+    post:
+      tags: [adaptive]
+      operationId: adaptiveCommit
+      summary: Execute a proposal when the adaptive execute gate is enabled
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [proposalId, entities, authority]
+              properties:
+                proposalId: { type: string }
+                entities:
+                  type: array
+                  items:
+                    type: object
+                    additionalProperties: true
+                authority:
+                  type: object
+                  description: Explicit decision fields (for example source, approver, reason)
+                  additionalProperties: true
+      responses:
+        "200":
+          description: Entities written to the broker
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  proposalId: { type: string }
+                  executed: { type: boolean }
+                  recorded: { type: boolean }
+                  entityIds:
+                    type: array
+                    items: { type: string }
+        "400":
+          description: Missing proposal, entities, or authority
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "403":
+          description: Execute gate is off; decision recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+
+  /api/adaptive/decisions:
+    get:
+      tags: [adaptive]
+      operationId: adaptiveDecisions
+      summary: Append-only adaptive decision log
+      responses:
+        "200":
+          description: Decision records
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  decisions:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+
+  /api/bridge/health:
+    get:
+      tags: [bridge]
+      operationId: bridgeHealth
+      summary: Bridge health and rclone version probe
+      responses:
+        "200":
+          description: Bridge status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  service: { type: string }
+                  rclone: { type: [string, "null"] }
+
+  /api/bridge/remotes:
+    get:
+      tags: [bridge]
+      operationId: bridgeListRemotes
+      summary: List configured rclone remotes
+      responses:
+        "200":
+          description: Remote names and wizard backends
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  remotes:
+                    type: array
+                    items: { type: string }
+                  wizardBackends:
+                    type: object
+                    additionalProperties: true
+    post:
+      tags: [bridge]
+      operationId: bridgeCreateRemote
+      summary: Create a non-interactive rclone remote
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, type]
+              properties:
+                name: { type: string }
+                type: { type: string, description: Backend type such as s3, webdav, sftp, ftp }
+                params:
+                  type: object
+                  additionalProperties: true
+      responses:
+        "200":
+          description: Remote created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  created: { type: string }
+                  type: { type: string }
+        "400":
+          description: Invalid name or backend
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/bridge/remotes/delete:
+    post:
+      tags: [bridge]
+      operationId: bridgeDeleteRemote
+      summary: Delete a configured remote
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string }
+      responses:
+        "200":
+          description: Remote deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted: { type: string }
+
+  /api/bridge/check:
+    post:
+      tags: [bridge]
+      operationId: bridgeCheck
+      summary: Probe whether a remote can be listed
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [remote]
+              properties:
+                remote: { type: string }
+      responses:
+        "200":
+          description: Remote reachable
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok: { type: boolean }
+                  directories:
+                    type: array
+                    items: { type: string }
+        "502":
+          description: rclone listing failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /api/bridge/pull:
+    post:
+      tags: [bridge]
+      operationId: bridgePull
+      summary: Copy remote files into the lake inbox and ingest USDM JSON
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [remote]
+              properties:
+                remote: { type: string }
+                path: { type: string }
+      responses:
+        "200":
+          description: Pull completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pulled:
+                    type: array
+                    items: { type: string }
+                  ingested:
+                    type: array
+                    items:
+                      type: object
+                      additionalProperties: true
+                  inbox: { type: string }
+
+  /api/bridge/publish:
+    post:
+      tags: [bridge]
+      operationId: bridgePublish
+      summary: Publish lake outputs to a remote
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [remote]
+              properties:
+                remote: { type: string }
+                path: { type: string, description: Destination prefix on the remote }
+                what:
+                  type: array
+                  items: { type: string }
+                  description: Lake subtrees to publish (default sdtm and datasetjson)
+      responses:
+        "200":
+          description: Publish completed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  published:
+                    type: array
+                    items: { type: string }
+                  destination: { type: string }
+        "400":
+          description: Nothing available to publish yet
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  parameters:
+    ApiVersionHeader:
+      name: X-API-Version
+      in: header
+      required: false
+      description: Optional pin for the published API version (send "1" for this contract)
+      schema:
+        type: string
+        enum: ["1"]
+  schemas:
+    Health:
+      type: object
+      properties:
+        ok: { type: boolean }
+        service: { type: string }
+      additionalProperties: true
+    Error:
+      type: object
+      properties:
+        error: { type: string }
+      additionalProperties: true

@@ -1,0 +1,48 @@
+# Example overlay when the standard port range (8080, 8101-8107, 9090) and
+# the local-run range (18080, 19091) are all busy.
+#
+# Usage:
+#   docker compose -f docker-compose.yaml -f docker-compose.busy-ports.example.yaml up -d
+#
+# Remaps all host ports to a higher range (18081, 18101-18107, 19092).
+# Container-internal ports and service-to-service URLs remain unchanged.
+# Adjust curl examples and browser URLs to match your chosen mapping.
+#
+# Uses Compose Spec !override so ports replace rather than append.
+
+services:
+  scorpio:
+    ports: !override
+      - "19092:9090"
+
+  web:
+    ports: !override
+      - "18081:8080"
+
+  usdm:
+    ports: !override
+      - "18101:8101"
+
+  projection:
+    ports: !override
+      - "18102:8102"
+
+  subscriptions:
+    ports: !override
+      - "18103:8103"
+
+  transform:
+    ports: !override
+      - "18104:8104"
+
+  lake:
+    ports: !override
+      - "18105:8105"
+
+  adaptive:
+    ports: !override
+      - "18106:8106"
+
+  bridge:
+    ports: !override
+      - "18107:8107"

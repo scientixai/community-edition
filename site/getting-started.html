@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Install the Provenance Neural Engine Community Edition with one command, run the setup wizard, and walk a clinical study from authoring to SDTM in fifteen minutes.">
+<meta name="theme-color" content="#131313">
+<title>Getting started · Scientix.AI Community Edition</title>
+<link rel="icon" href="assets/brand/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/brand/favicon.png" type="image/png" sizes="any">
+<link rel="stylesheet" href="style.css">
+<script>(function(){try{var m=localStorage.getItem("ce-mode");if(m==="dark"||m==="light")document.documentElement.setAttribute("data-mode",m);}catch(e){}})();</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header"><div class="wrap">
+  <a class="brand" href="index.html"><img src="assets/brand/scientix-ai-logo-inverse.svg" alt="Scientix.AI" width="494" height="77"><span class="edition">Community Edition</span></a>
+  <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Menu"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/></svg></button>
+  <nav class="site-nav" id="site-nav" aria-label="Site">
+    <a href="getting-started.html" aria-current="page">Getting started</a>
+    <a href="architecture.html">Architecture</a>
+    <a href="connectors.html">Connectors</a>
+    <a href="https://github.com/scientixai/community-edition">GitHub</a>
+  </nav>
+  <button class="mode-toggle" type="button" aria-label="Switch color mode"><svg class="sun" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1"/></svg><svg class="moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 10.2A6 6 0 0 1 5.8 2.5a6 6 0 1 0 7.7 7.7z"/></svg></button>
+</div></header>
+
+<main id="main"><div class="wrap doc">
+<article>
+<p class="crumbs"><a href="index.html">Community Edition</a> / Docs / Getting started</p>
+<h1>Fifteen minutes to a flowing study</h1>
+<p class="summary">Install, open the wizard, walk six steps. Everything below runs on one machine with Docker and nothing else.</p>
+
+<h2 id="prerequisites">Prerequisites</h2>
+<ul>
+  <li><strong>Docker with Compose v2</strong> (<code>docker compose version</code>) and about 6 GB of free RAM for the containers; the broker JVM is the big consumer.
+    <ul style="margin-top: 0.5em;">
+      <li><strong>Linux</strong>: <a href="https://docs.docker.com/engine/install/">Docker Engine</a> (Desktop optional)</li>
+      <li><strong>Windows</strong>: <a href="https://docs.docker.com/desktop/install/windows-install/">Docker Desktop</a> with WSL2 backend enabled</li>
+      <li><strong>macOS</strong>: <a href="https://docs.docker.com/desktop/install/mac-install/">Docker Desktop</a></li>
+    </ul>
+  </li>
+  <li><strong>Apple Silicon</strong>: Enable "Use Rosetta for x86_64/amd64 emulation" in Docker Desktop settings (the broker image is amd64-only).</li>
+  <li><strong>Windows</strong>: Ensure WSL2 is enabled and Docker Desktop uses the WSL2 backend (default on recent installs).</li>
+  <li><strong>No cloud account and no API keys</strong>. Optionally an <code>ANTHROPIC_API_KEY</code> upgrades the AI step from the offline stub to a real model.</li>
+</ul>
+
+<h2 id="install">Install</h2>
+<p>Pick any of the three:</p>
+<pre><code><span class="c"># one-liner</span>
+curl -fsSL https://raw.githubusercontent.com/scientixai/community-edition/main/install.sh | sh
+
+<span class="c"># npx flavor</span>
+npx pne-community-edition
+
+<span class="c"># or plain git</span>
+git clone https://github.com/scientixai/community-edition
+cd community-edition &amp;&amp; docker compose up -d</code></pre>
+<p>All three end the same way: prebuilt images pulled where available, stack up, broker health-checked. Confirm the punchline yourself:</p>
+<pre><code>docker compose logs scorpio | grep in-memory
+<span class="c"># ... Profile in-memory activated.</span></code></pre>
+<p>Every broker service in one JVM, in-process messaging, no external message bus, no cloud.</p>
+
+<h3 id="ports">Handling busy ports</h3>
+<p>The runtime uses ports <strong>9090</strong> (broker), <strong>8080</strong> (web), and <strong>8101–8107</strong> (pipeline services).</p>
+<p>If <strong>only 9090 or 8080 are busy</strong>, use the local overlay:</p>
+<pre><code>docker compose -f docker-compose.yaml -f docker-compose.local-run.yaml up -d
+<span class="c"># Remaps: broker → 19091, web → 18080</span></code></pre>
+<p>If <strong>the entire range is busy</strong> (including 18080, 19091, and 8101–8107), use the full-port example:</p>
+<pre><code>docker compose -f docker-compose.yaml -f docker-compose.busy-ports.example.yaml up -d
+<span class="c"># Remaps: broker → 19092, web → 18081, services → 18101–18107</span></code></pre>
+<p>Overlays remap host-side ports only; container internals stay unchanged. When using an overlay, substitute the remapped ports in all <code>localhost</code> URLs (browser and curl). For concurrent projects, add <code>-p &lt;unique-name&gt;</code> to run multiple stacks.</p>
+
+<h2 id="first-run">First run</h2>
+<p>Open <code>http://localhost:8080/setup.html</code>: the wizard checks service health, seeds the demo study (or starts empty), shows whether the AI layer has a key, and configures optional storage connectors.</p>
+
+<h2 id="walkthrough">Walk the scenario</h2>
+<p>Then <code>http://localhost:8080</code> walks six steps: author the CARDIO-118 study, project it to Dataset-JSON, enroll participants, watch the subscription fire the sdtm.oak transform, query the lake with SQL, and end with a natural-language statement flowing through the same pipeline. The terminal twin is <code>./infra/scripts/demo.sh</code>, and every step is plain curl if you want to see the requests.</p>
+<div class="note"><p>The full hand-typed version of the walkthrough, request by request, lives in the repository: <a href="https://github.com/scientixai/community-edition/blob/main/docs/getting-started.md">docs/getting-started.md</a>.</p></div>
+
+<h2 id="query">Query anything</h2>
+<pre><code>python3 lake/query.py "SELECT VISIT, round(avg(VSSTRESN),1) AS mean_sysbp
+  FROM read_csv_auto('/lake/sdtm/vs.csv')
+  WHERE VSTESTCD='SYSBP' GROUP BY VISIT ORDER BY min(VISITNUM)"</code></pre>
+
+<h2 id="reset">Reset</h2>
+<pre><code>docker compose down -v &amp;&amp; rm -rf lake/data/* &amp;&amp; docker compose up -d</code></pre>
+
+<h2 id="troubleshooting">Troubleshooting</h2>
+<ul>
+  <li><strong>Broker never healthy</strong>: <code>docker compose logs scorpio</code>; on Apple Silicon without Rosetta the JVM can crash-loop.</li>
+  <li><strong>Corporate proxy with TLS inspection</strong>: drop your proxy CA certificates into <code>pipeline/transform/build-support/ca/</code> and <code>lake/build-support/ca/</code> before building locally.</li>
+  <li><strong>Ports</strong>: Standard ports (8080, 8101–8107, 9090) must be free, or use a port overlay (see <a href="#ports">Handling busy ports</a> above). Edit or create custom overlay files for other mappings.</li>
+  <li><strong>install.sh with overlays</strong>: Set <code>SCORPIO_HOST_PORT=19091</code> or <code>BROKER_HEALTH_URL=http://localhost:19091/q/health</code> when running install.sh with custom port mappings.</li>
+</ul>
+<nav class="doc-nav" aria-label="Pages"><a class="next" href="architecture.html"><small>Next</small>Architecture</a></nav>
+</article>
+<aside class="toc" aria-label="On this page"><b>On this page</b><ol><li><a href="#prerequisites">Prerequisites</a></li><li><a href="#install">Install</a><ol style="margin: 0.25em 0;"><li><a href="#ports">Handling busy ports</a></li></ol></li><li><a href="#first-run">First run</a></li><li><a href="#walkthrough">Walk the scenario</a></li><li><a href="#query">Query anything</a></li><li><a href="#reset">Reset</a></li><li><a href="#troubleshooting">Troubleshooting</a></li></ol></aside>
+</div></main>
+<footer class="site-footer"><div class="wrap">
+  <div class="top">
+    <div>
+      <a class="brand" href="https://scientix.ai"><img src="assets/brand/scientix-ai-logo-inverse.svg" alt="Scientix.AI" width="494" height="77"></a>
+      <p class="tagline">Architecting the future of healthcare</p>
+    </div>
+    <nav aria-label="Footer">
+      <div><b>Docs</b>
+        <a href="getting-started.html">Getting started</a>
+        <a href="architecture.html">Architecture</a>
+        <a href="connectors.html">Connectors</a></div>
+      <div><b>Project</b>
+        <a href="https://github.com/scientixai/community-edition">Source on GitHub</a>
+        <a href="https://github.com/scientixai/community-edition/blob/main/docs/licensing.md">Licensing</a>
+        <a href="https://github.com/scientixai/community-edition/blob/main/TRADEMARKS.md">Trademark policy</a></div>
+      <div><b>Company</b>
+        <a href="https://scientix.ai">About Us</a>
+        <a href="https://top.scientix.ai">The Ontology Project</a></div>
+    </nav>
+  </div>
+  <p class="legal">Provenance Neural Engine&trade; Community Edition. Copyright 2026 Scientix.AI. Code under Apache-2.0. "Provenance Neural Engine" and "PNE" are trademarks of Scientix.AI; the Apache license grants no trademark rights.</p>
+</div></footer>
+<script src="site.js"></script>
+</body>
+</html>

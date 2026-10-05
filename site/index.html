@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Provenance Neural Engine Community Edition: a free, open, laptop-runnable reference deployment of a provenance engine for healthcare and life sciences data, demonstrated end to end on clinical research. One docker compose up, no cloud account.">
+<meta name="theme-color" content="#131313">
+<title>Scientix.AI Community Edition</title>
+<link rel="icon" href="assets/brand/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="assets/brand/favicon.png" type="image/png" sizes="any">
+<link rel="stylesheet" href="style.css">
+<script>(function(){try{var m=localStorage.getItem("ce-mode");if(m==="dark"||m==="light")document.documentElement.setAttribute("data-mode",m);}catch(e){}})();</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header"><div class="wrap">
+  <a class="brand" href="index.html"><img src="assets/brand/scientix-ai-logo-inverse.svg" alt="Scientix.AI" width="494" height="77"><span class="edition">Community Edition</span></a>
+  <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="site-nav" aria-label="Menu"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M2.5 4.5h11M2.5 8h11M2.5 11.5h11"/></svg></button>
+  <nav class="site-nav" id="site-nav" aria-label="Site">
+    <a href="getting-started.html">Getting started</a>
+    <a href="architecture.html">Architecture</a>
+    <a href="connectors.html">Connectors</a>
+    <a href="https://github.com/scientixai/community-edition">GitHub</a>
+  </nav>
+  <button class="mode-toggle" type="button" aria-label="Switch color mode"><svg class="sun" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true"><circle cx="8" cy="8" r="3"/><path d="M8 1.5v1.6M8 12.9v1.6M1.5 8h1.6M12.9 8h1.6M3.4 3.4l1.1 1.1M11.5 11.5l1.1 1.1M3.4 12.6l1.1-1.1M11.5 4.5l1.1-1.1"/></svg><svg class="moon" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><path d="M13.5 10.2A6 6 0 0 1 5.8 2.5a6 6 0 1 0 7.7 7.7z"/></svg></button>
+</div></header>
+
+<main id="main">
+<div class="hero"><div class="wrap">
+  <div>
+    <h1>A clinical study, from authoring to <em>SDTM</em>, on your laptop.</h1>
+    <p class="lede">The Provenance Neural Engine&trade; Community Edition is a free, open reference deployment of a domain-agnostic data engine on an NGSI-LD broker, demonstrated end to end on clinical research, with a sprinkle of AI. No cloud dependency of any kind: no cloud account, no message queue, no object store to provision.</p>
+    <div class="actions">
+      <a class="button primary" href="getting-started.html">Fifteen-minute walkthrough</a>
+      <a class="button ghost" href="https://github.com/scientixai/community-edition"><svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 .4a7.6 7.6 0 0 0-2.4 14.8c.4.1.5-.2.5-.4v-1.4c-2.1.5-2.6-1-2.6-1-.3-.9-.8-1.1-.8-1.1-.7-.5.1-.5.1-.5.8.1 1.2.8 1.2.8.7 1.2 1.8.9 2.2.7.1-.5.3-.9.5-1.1-1.7-.2-3.5-.8-3.5-3.7 0-.8.3-1.5.8-2-.1-.2-.3-1 .1-2 0 0 .6-.2 2.1.8a7.3 7.3 0 0 1 3.8 0c1.5-1 2.1-.8 2.1-.8.4 1 .2 1.8.1 2 .5.5.8 1.2.8 2 0 2.9-1.8 3.5-3.5 3.7.3.2.5.7.5 1.4v2.1c0 .2.1.5.5.4A7.6 7.6 0 0 0 8 .4z"/></svg> Source on GitHub</a>
+    </div>
+    <p class="fineprint">Requires Docker. Apache-2.0. The AI step runs offline by default; add an Anthropic API key when you want a real model.</p>
+  </div>
+  <div class="terminal" aria-label="Install and verify">
+    <div class="bar"><span></span><span></span><span></span><em class="title">zsh</em></div>
+    <div class="body"><span class="ps">$</span> curl -fsSL https://raw.githubusercontent.com/scientixai/community-edition/main/install.sh | sh
+<span class="out">stack up, broker health-checked</span>
+
+<span class="ps">$</span> docker compose logs scorpio | grep in-memory
+<span class="ok">Profile in-memory activated.</span>
+
+<span class="ps">$</span> open http://localhost:8080/setup.html</div>
+    <div class="copy-row"><span>Also <code>npx pne-community-edition</code> or a plain <code>git clone</code>.</span><button type="button" data-copy="curl -fsSL https://raw.githubusercontent.com/scientixai/community-edition/main/install.sh | sh">Copy</button></div>
+  </div>
+</div></div>
+
+<section><div class="wrap">
+  <h2>What happens when you run it</h2>
+  <div class="section-intro"><p>Six steps, in order, each one a real request against a real service. The walkthrough UI drives them; every step is also plain curl.</p></div>
+  <ol class="pipeline">
+    <li><h3>Author</h3><p>A USDM-style study definition becomes NGSI-LD entities in an upstream NEC Scorpio broker, typed with the open T.O.P. cr-domain vocabulary: Study, Arms, Endpoints, EligibilityCriteria, Visits.</p></li>
+    <li><h3>Project</h3><p>The study design is projected to CDISC SDTM trial-design domains (TS, TA, TI, TV) as Dataset-JSON. Standards are views, not the stored model.</p></li>
+    <li><h3>React</h3><p>Every write to the broker fires an NGSI-LD subscription that notifies the pipeline directly over HTTP. That one hop replaces SNS, SQS, and a Lambda.</p></li>
+    <li><h3>Transform</h3><p>sdtm.oak, the open-source CDISC/pharmaverse engine, maps raw execution data to SDTM: controlled terminology, sequence derivation, the real thing.</p></li>
+    <li><h3>Query</h3><p>DuckDB runs SQL straight over the files in the lake. Athena semantics, zero infrastructure. You can also just <code>ls</code> the lake.</p></li>
+    <li><h3>Sprinkle of AI</h3><p>A natural-language clinical statement becomes a broker entity and re-triggers the whole pipeline. One model call, or a deterministic offline stub when there is no API key.</p></li>
+  </ol>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Cloud service, replaced</h2>
+  <p>The architecture (an NGSI-LD broker fronting a CDISC pipeline) is inspired by the AWS Garnet Framework, and built without it. The broker itself never needed the cloud: NEC Scorpio ships an in-memory build that runs every broker service in one JVM. SQS was a packaging choice, not a requirement.</p>
+  <table class="swap">
+    <thead><tr><th>Garnet used (AWS)</th><th>Community Edition uses</th></tr></thead>
+    <tbody>
+    <tr><td>SQS/SNS subscription fan-out</td><td>NGSI-LD subscriptions delivered straight to a local HTTP listener</td></tr>
+    <tr><td>S3 object persistence</td><td>A filesystem directory you can <code>ls</code></td></tr>
+    <tr><td>Athena SQL over the lake</td><td>DuckDB over the files</td></tr>
+    <tr><td>Kinesis Firehose</td><td>Direct writes from the pipeline</td></tr>
+    <tr><td>Fargate orchestration</td><td>docker compose</td></tr>
+    </tbody>
+  </table>
+  <p>Need parts of the cloud back for a production deployment? The lake is deliberately swappable: <a href="architecture.html#lake">Postgres, Athena, Trino, ClickHouse, MinIO</a> all fit behind the same small contract.</p>
+</div></section>
+
+<section><div class="wrap">
+  <h2>One engine, many domains</h2>
+  <p>Clinical research is the first anchored domain, not the boundary. Domains are pluggable vocabularies from <a href="https://github.com/scientixai/the-ontology-project">The Ontology Project</a>; the broker, context, subscription, projection, and lake architecture stays the same. The applicability runs across the healthcare and life sciences value chain, from healthcare delivery through drug development, commercialization, and claims, and into the territory that CMC naturally crosses: manufacturing, quality, and supply chain. Swap the vocabulary and the projections; keep the engine.</p>
+</div></section>
+
+<section><div class="wrap">
+  <h2>What this edition covers</h2>
+  <p>The Community Edition is a complete local reference stack: an off-the-shelf NGSI-LD broker, an open transform engine, Dataset-JSON and SDTM projections, and one optional model call (or an offline stub). It is built for local practice and learning on a single node.</p>
+  <table>
+    <thead><tr><th scope="col"><span class="sr-only">Capability</span></th><th scope="col">Community Edition</th></tr></thead>
+    <tbody>
+    <tr><td>License</td><td><span class="yes">Apache-2.0</span></td></tr>
+    <tr><td>NGSI-LD broker + CDISC pipeline (USDM, Dataset-JSON, SDTM)</td><td><span class="yes">Yes</span></td></tr>
+    <tr><td>AI entity construction</td><td>One model call or offline stub</td></tr>
+    <tr><td>Provenance and time</td><td>Broker-native temporal API</td></tr>
+    <tr><td>Deployment</td><td>Laptop, single node via docker compose</td></tr>
+    </tbody>
+  </table>
+  <p>Learn more about Scientix.AI at <a href="https://scientix.ai">scientix.ai</a>.</p>
+</div></section>
+
+<section><div class="wrap">
+  <h2>Built in the open, on open things</h2>
+  <p>Nothing in this stack is proprietary. Architectural inspiration is credited to the AWS Garnet Framework; none of its code or services are used.</p>
+  <div class="credits">
+    <div><b><a href="https://github.com/scientixai/the-ontology-project">The Ontology Project</a></b><span>Vocabulary, cr-domain. Apache-2.0.</span></div>
+    <div><b><a href="https://github.com/ScorpioBroker/ScorpioBroker">NEC Scorpio</a></b><span>NGSI-LD broker, upstream image, in-memory profile.</span></div>
+    <div><b><a href="https://github.com/pharmaverse/sdtm.oak">sdtm.oak</a></b><span>Transform engine from the CDISC/pharmaverse community.</span></div>
+    <div><b><a href="https://duckdb.org">DuckDB</a></b><span>SQL over the files in the lake.</span></div>
+    <div><b><a href="https://rclone.org">rclone</a></b><span>Optional storage connectors, in and out.</span></div>
+  </div>
+</div></section>
+</main>
+<footer class="site-footer"><div class="wrap">
+  <div class="top">
+    <div>
+      <a class="brand" href="https://scientix.ai"><img src="assets/brand/scientix-ai-logo-inverse.svg" alt="Scientix.AI" width="494" height="77"></a>
+      <p class="tagline">Architecting the future of healthcare</p>
+    </div>
+    <nav aria-label="Footer">
+      <div><b>Docs</b>
+        <a href="getting-started.html">Getting started</a>
+        <a href="architecture.html">Architecture</a>
+        <a href="connectors.html">Connectors</a></div>
+      <div><b>Project</b>
+        <a href="https://github.com/scientixai/community-edition">Source on GitHub</a>
+        <a href="https://github.com/scientixai/community-edition/blob/main/docs/licensing.md">Licensing</a>
+        <a href="https://github.com/scientixai/community-edition/blob/main/TRADEMARKS.md">Trademark policy</a></div>
+      <div><b>Company</b>
+        <a href="https://scientix.ai">About Us</a>
+        <a href="https://top.scientix.ai">The Ontology Project</a></div>
+    </nav>
+  </div>
+  <p class="legal">Provenance Neural Engine&trade; Community Edition. Copyright 2026 Scientix.AI. Code under Apache-2.0. "Provenance Neural Engine" and "PNE" are trademarks of Scientix.AI; the Apache license grants no trademark rights.</p>
+</div></footer>
+<script src="site.js"></script>
+</body>
+</html>

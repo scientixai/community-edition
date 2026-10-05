@@ -1,0 +1,40 @@
+[
+  {
+    "@context": "http://web:8080/context/pne-context.jsonld",
+    "id": "urn:ngsi-ld:StudySubject:cardio-118-s2201",
+    "type": "StudySubject",
+    "subjectId": { "type": "Property", "value": "S2201" }
+  },
+  {
+    "@context": "http://web:8080/context/pne-context.jsonld",
+    "id": "urn:ngsi-ld:StudySubject:cardio-118-s2202",
+    "type": "StudySubject",
+    "subjectId": { "type": "Property", "value": "S2202" }
+  },
+  {
+    "@context": "http://web:8080/context/pne-context.jsonld",
+    "id": "urn:ngsi-ld:Participant:cardio-118-hou-07-p2201",
+    "type": "Participant",
+    "screeningNumber": { "type": "Property", "value": "P2201" },
+    "participantStatus": { "type": "Property", "value": "ON_TREATMENT" },
+    "enrollmentDate": { "type": "Property", "value": "2026-03-09" },
+    "sex": { "type": "Property", "value": "F" },
+    "country": { "type": "Property", "value": "USA" },
+    "forStudy": { "type": "Relationship", "object": "urn:ngsi-ld:Study:CARDIO-118" },
+    "forStudySite": { "type": "Relationship", "object": "urn:ngsi-ld:StudySite:HOU-07" },
+    "assignedToArm": { "type": "Relationship", "object": "urn:ngsi-ld:Arm:CARDIO-118-arm-a" }
+  },
+  {
+    "@context": "http://web:8080/context/pne-context.jsonld",
+    "id": "urn:ngsi-ld:Participant:cardio-118-hou-07-p2202",
+    "type": "Participant",
+    "screeningNumber": { "type": "Property", "value": "P2202" },
+    "participantStatus": { "type": "Property", "value": "ON_TREATMENT" },
+    "enrollmentDate": { "type": "Property", "value": "2026-03-16" },
+    "sex": { "type": "Property", "value": "M" },
+    "country": { "type": "Property", "value": "USA" },
+    "forStudy": { "type": "Relationship", "object": "urn:ngsi-ld:Study:CARDIO-118" },
+    "forStudySite": { "type": "Relationship", "object": "urn:ngsi-ld:StudySite:HOU-07" },
+    "assignedToArm": { "type": "Relationship", "object": "urn:ngsi-ld:Arm:CARDIO-118-arm-b" }
+  }
+]

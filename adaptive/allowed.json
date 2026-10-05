@@ -1,0 +1,47 @@
+{
+  "allowedTypes": [
+    "Participant",
+    "VisitOccurrence",
+    "ClinicalObservation",
+    "AdverseEvent"
+  ],
+  "attributeVocabulary": {
+    "Participant": [
+      "screeningNumber",
+      "participantStatus",
+      "enrollmentDate",
+      "sex",
+      "country",
+      "forStudy",
+      "forStudySite",
+      "assignedToArm"
+    ],
+    "VisitOccurrence": [
+      "forParticipant",
+      "atStudySite",
+      "perVisitDefinition",
+      "visitType",
+      "visitMode",
+      "visitStatus",
+      "windowStatus",
+      "actualStartDate",
+      "actualEndDate"
+    ],
+    "ClinicalObservation": [
+      "forParticipant",
+      "atVisit",
+      "observationForSubject",
+      "parameterCode",
+      "numericValue",
+      "unit",
+      "interpretation"
+    ],
+    "AdverseEvent": [
+      "forParticipant",
+      "aeTerm",
+      "aeSeverity",
+      "aeOnsetDate",
+      "aeOutcome"
+    ]
+  }
+}

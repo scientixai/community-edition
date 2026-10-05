@@ -1,0 +1,73 @@
+{
+  "usdmVersion": "4.0",
+  "study": {
+    "id": "CARDIO-118",
+    "name": "CARDIO-118",
+    "description": "A phase 2, randomized, two-arm study of BX-441 in adults with stage 1 hypertension.",
+    "versions": [
+      {
+        "studyIdentifiers": [
+          { "text": "CARDIO-118", "scopeId": "sponsor" }
+        ],
+        "titles": [
+          {
+            "type": "Official Study Title",
+            "text": "A Phase 2, Randomized, Open-Label, Two-Arm Study Evaluating BX-441 Versus Standard of Care in Adults With Stage 1 Hypertension"
+          }
+        ],
+        "studyPhase": "PHASE_2",
+        "organizations": [
+          { "id": "sponsor", "name": "Scientix Demo Sponsor", "type": "SPONSOR" }
+        ],
+        "studyDesigns": [
+          {
+            "id": "sd-1",
+            "arms": [
+              { "id": "arm-a", "name": "A", "label": "BX-441 40 mg daily", "type": "EXPERIMENTAL" },
+              { "id": "arm-b", "name": "B", "label": "Standard of care", "type": "ACTIVE_COMPARATOR" }
+            ],
+            "population": {
+              "criteria": [
+                {
+                  "id": "inc-1",
+                  "category": "INCLUSION",
+                  "identifier": "INC1",
+                  "text": "Adults 18 to 75 years of age with stage 1 hypertension (systolic 130 to 139 mmHg)."
+                },
+                {
+                  "id": "exc-1",
+                  "category": "EXCLUSION",
+                  "identifier": "EXC1",
+                  "text": "History of myocardial infarction or stroke within 6 months of screening."
+                }
+              ]
+            },
+            "objectives": [
+              {
+                "id": "obj-1",
+                "level": "PRIMARY",
+                "text": "Demonstrate superior reduction in systolic blood pressure at week 8.",
+                "endpoints": [
+                  {
+                    "id": "ep-1",
+                    "level": "PRIMARY",
+                    "text": "Change from baseline in mean seated systolic blood pressure at week 8."
+                  }
+                ]
+              }
+            ],
+            "encounters": [
+              { "id": "enc-1", "name": "Screening", "visitNumber": 1, "plannedDay": -14 },
+              { "id": "enc-2", "name": "Baseline", "visitNumber": 2, "plannedDay": 1 },
+              { "id": "enc-3", "name": "Week 4", "visitNumber": 3, "plannedDay": 29 },
+              { "id": "enc-4", "name": "Week 8", "visitNumber": 4, "plannedDay": 57 }
+            ],
+            "studySites": [
+              { "id": "HOU-07", "name": "Houston Cardiology Research Center" }
+            ]
+          }
+        ]
+      }
+    ]
+  }
+}

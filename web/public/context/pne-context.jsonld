@@ -1,0 +1,1124 @@
+{
+  "@context": {
+    "Action": "hcls:Action",
+    "ActivityOccurrence": "cr:ActivityOccurrence",
+    "ActivityTemplate": "cr:ActivityTemplate",
+    "Administration": "cr:Administration",
+    "AdverseEvent": "cr:AdverseEvent",
+    "AnalysisDataset": "cr:AnalysisDataset",
+    "AnalysisDecision": "cr:AnalysisDecision",
+    "AnalysisRequest": "cr:AnalysisRequest",
+    "AnalysisService": "cr:AnalysisService",
+    "Arm": "cr:Arm",
+    "AssayResult": "cr:AssayResult",
+    "Assessment": "cr:Assessment",
+    "Attestation": "cr:Attestation",
+    "AuditTrail": "cr:AuditTrail",
+    "BiomedicalConcept": "cr:BiomedicalConcept",
+    "BlindingConstraint": "cr:BlindingConstraint",
+    "BriefingBook": "cr:BriefingBook",
+    "BudgetContractingWorkStream": "cr:BudgetContractingWorkStream",
+    "CAPA": "cr:CAPA",
+    "CRO": "cr:CRO",
+    "CSR": "cr:CSR",
+    "CSRSection": "cr:CSRSection",
+    "Capability": "cr:Capability",
+    "CaseReportForm": "cr:CaseReportForm",
+    "CausalityAssessment": "cr:CausalityAssessment",
+    "CertifiedCopy": "cr:CertifiedCopy",
+    "ClinOpsWorkStream": "cr:ClinOpsWorkStream",
+    "ClinicalHold": "cr:ClinicalHold",
+    "ClinicalObservation": "cr:ClinicalObservation",
+    "ClinicalResearchAssociate": "cr:ClinicalResearchAssociate",
+    "ClinicalStudyReport": "cr:ClinicalStudyReport",
+    "ClinicalTrialAgreement": "cr:ClinicalTrialAgreement",
+    "Clinician": "hcls:Clinician",
+    "Cohort": "cr:Cohort",
+    "Condition": "hcls:Condition",
+    "Consent": "hcls:Consent",
+    "ConsentWithdrawal": "cr:ConsentWithdrawal",
+    "CoverageAnalysis": "cr:CoverageAnalysis",
+    "Credential": "cr:Credential",
+    "CriticalToQualityFactor": "cr:CriticalToQualityFactor",
+    "CustodyEvent": "cr:CustodyEvent",
+    "DataDefinition": "cr:DataDefinition",
+    "DataElementDef": "cr:DataElementDef",
+    "DataElementSpecification": "cr:DataElementSpecification",
+    "DataManager": "cr:DataManager",
+    "DataProcessingAgreement": "cr:DataProcessingAgreement",
+    "DataSubjectRequest": "cr:DataSubjectRequest",
+    "DataTransferAgreement": "cr:DataTransferAgreement",
+    "DatabaseLock": "cr:DatabaseLock",
+    "DatabaseUnlock": "cr:DatabaseUnlock",
+    "Delegation": "cr:Delegation",
+    "DeviationAntecedent": "cr:DeviationAntecedent",
+    "DeviationEvent": "cr:DeviationEvent",
+    "DoseLevel": "cr:DoseLevel",
+    "DoseLimitingToxicity": "cr:DoseLimitingToxicity",
+    "EligibilityCriterion": "cr:EligibilityCriterion",
+    "Endpoint": "cr:Endpoint",
+    "EndpointResult": "cr:EndpointResult",
+    "Enrollment": "cr:Enrollment",
+    "EssentialRecord": "cr:EssentialRecord",
+    "Estimand": "cr:Estimand",
+    "FinanceStaff": "cr:FinanceStaff",
+    "FollowUpVisit": "cr:FollowUpVisit",
+    "GLPToxReport": "cr:GLPToxReport",
+    "HealthcareFacility": "hcls:HealthcareFacility",
+    "INDApplication": "cr:INDApplication",
+    "IRB": "cr:IRB",
+    "IRBApproval": "cr:IRBApproval",
+    "InformedConsent": "cr:InformedConsent",
+    "InvestigationalProduct": "cr:InvestigationalProduct",
+    "Investigator": "cr:Investigator",
+    "ItemGroup": "cr:ItemGroup",
+    "JobToBeDone": "hcls:JobToBeDone",
+    "LastPatientLastVisit": "cr:LastPatientLastVisit",
+    "LawfulBasis": "cr:LawfulBasis",
+    "LongTermFollowUp": "cr:LongTermFollowUp",
+    "Lot": "hcls:Lot",
+    "Mapping": "cx:Mapping",
+    "MedicinalProduct": "hcls:MedicinalProduct",
+    "MitigationPlan": "cr:MitigationPlan",
+    "NonclinicalFinding": "cr:NonclinicalFinding",
+    "Observation": "hcls:Observation",
+    "OperationalRecord": "cr:OperationalRecord",
+    "Organization": "hcls:Organization",
+    "Participant": "cr:Participant",
+    "ParticipantSchedule": "cr:ParticipantSchedule",
+    "Person": "hcls:Person",
+    "PharmacovigilianceSpecialist": "cr:PharmacovigilianceSpecialist",
+    "Phase": "hcls:Phase",
+    "Phase3Design": "cr:Phase3Design",
+    "PlannedActivity": "cr:PlannedActivity",
+    "PlannedEncounter": "cr:PlannedEncounter",
+    "PlannedVisit": "cr:PlannedVisit",
+    "Practitioner": "hcls:Practitioner",
+    "ProtocolVersion": "cr:ProtocolVersion",
+    "Query": "cr:Query",
+    "RegulatoryAffairsSpecialist": "cr:RegulatoryAffairsSpecialist",
+    "RegulatoryAgreement": "cr:RegulatoryAgreement",
+    "RegulatoryInteraction": "cr:RegulatoryInteraction",
+    "RegulatoryQuestion": "cr:RegulatoryQuestion",
+    "RegulatoryWorkStream": "cr:RegulatoryWorkStream",
+    "RepeatingPlannedActivity": "cr:RepeatingPlannedActivity",
+    "RetentionPolicy": "cr:RetentionPolicy",
+    "RiskAssessment": "cr:RiskAssessment",
+    "RiskRegister": "cr:RiskRegister",
+    "RiskSignal": "cr:RiskSignal",
+    "SUSAR": "cr:SUSAR",
+    "SafetyAssessment": "cr:SafetyAssessment",
+    "SafetyReport": "cr:SafetyReport",
+    "ScheduleTimeline": "cr:ScheduleTimeline",
+    "SeriousAdverseEvent": "cr:SeriousAdverseEvent",
+    "ServiceProvider": "cr:ServiceProvider",
+    "SiteActivation": "cr:SiteActivation",
+    "SiteCoordinator": "cr:SiteCoordinator",
+    "SiteInitiationVisit": "cr:SiteInitiationVisit",
+    "SiteMetrics": "cr:SiteMetrics",
+    "SiteSelectionDecision": "cr:SiteSelectionDecision",
+    "SourceData": "cr:SourceData",
+    "SourceDocument": "cr:SourceDocument",
+    "Specimen": "hcls:Specimen",
+    "Sponsor": "cr:Sponsor",
+    "SponsorOperationsStaff": "cr:SponsorOperationsStaff",
+    "SponsorProjectManager": "cr:SponsorProjectManager",
+    "SponsorQualityStaff": "cr:SponsorQualityStaff",
+    "StartupArtifact": "cr:StartupArtifact",
+    "StatisticalAnalysisPlan": "cr:StatisticalAnalysisPlan",
+    "StoppingRule": "cr:StoppingRule",
+    "Study": "cr:Study",
+    "StudyEvent": "cr:StudyEvent",
+    "StudySite": "cr:StudySite",
+    "StudyStartupPackage": "cr:StudyStartupPackage",
+    "StudySubject": "cr:StudySubject",
+    "Substance": "hcls:Substance",
+    "TableListingFigure": "cr:TableListingFigure",
+    "Timing": "cr:Timing",
+    "TransferAmendment": "cr:TransferAmendment",
+    "TransferFile": "cr:TransferFile",
+    "TransferProfile": "cr:TransferProfile",
+    "TransferScope": "cr:TransferScope",
+    "TransferSpecification": "cr:TransferSpecification",
+    "TrialMasterFile": "cr:TrialMasterFile",
+    "VendorAlias": "cr:VendorAlias",
+    "VendorConnectorProfile": "cr:VendorConnectorProfile",
+    "Visit": "cr:Visit",
+    "VisitDefinition": "cr:VisitDefinition",
+    "VisitOccurrence": "cr:VisitOccurrence",
+    "Window": "cr:Window",
+    "WorkStream": "cr:WorkStream",
+    "activates": {
+      "@id": "cr:activates",
+      "@type": "@id"
+    },
+    "activationPackage": {
+      "@id": "cr:activationPackage",
+      "@type": "@id"
+    },
+    "actsAs": "hcls:actsAs",
+    "actualEndDate": "cr:actualEndDate",
+    "actualEnrollment": "cr:actualEnrollment",
+    "actualStartDate": "cr:actualStartDate",
+    "addressesFinding": {
+      "@id": "cr:addressesFinding",
+      "@type": "@id"
+    },
+    "affectsSpecification": {
+      "@id": "cr:affectsSpecification",
+      "@type": "@id"
+    },
+    "affiliatedWith": {
+      "@id": "hcls:affiliatedWith",
+      "@type": "@id"
+    },
+    "agentModel": "cr:agentModel",
+    "aliasResolvesTo": {
+      "@id": "cr:aliasResolvesTo",
+      "@type": "@id"
+    },
+    "aliquotOf": {
+      "@id": "cr:aliquotOf",
+      "@type": "@id"
+    },
+    "analysisCompletedAt": "cr:analysisCompletedAt",
+    "analysisMethod": "cr:analysisMethod",
+    "analyzedUnder": {
+      "@id": "cr:analyzedUnder",
+      "@type": "@id"
+    },
+    "anchorDate": "cr:anchorDate",
+    "armCode": "cr:armCode",
+    "armName": "pne:armName",
+    "asSubject": {
+      "@id": "cr:asSubject",
+      "@type": "@id"
+    },
+    "assessedAt": {
+      "@id": "cr:assessedAt",
+      "@type": "@id"
+    },
+    "assessedBy": {
+      "@id": "cr:assessedBy",
+      "@type": "@id"
+    },
+    "assessesFactor": {
+      "@id": "cr:assessesFactor",
+      "@type": "@id"
+    },
+    "assessmentInstrument": {
+      "@id": "cr:assessmentInstrument",
+      "@type": "@id"
+    },
+    "assessmentResult": "cr:assessmentResult",
+    "assessmentScale": "cr:assessmentScale",
+    "assessmentUnit": "cr:assessmentUnit",
+    "assignedToArm": {
+      "@id": "cr:assignedToArm",
+      "@type": "@id"
+    },
+    "atSite": {
+      "@id": "cr:atSite",
+      "@type": "@id"
+    },
+    "atStudySite": {
+      "@id": "cr:atStudySite",
+      "@type": "@id"
+    },
+    "atVisit": {
+      "@id": "cr:atVisit",
+      "@type": "@id"
+    },
+    "attestedBy": {
+      "@id": "cr:attestedBy",
+      "@type": "@id"
+    },
+    "audits": {
+      "@id": "cr:audits",
+      "@type": "@id"
+    },
+    "author": {
+      "@id": "cx:author",
+      "@type": "@id"
+    },
+    "authorizedAgentType": {
+      "@id": "hcls:authorizedAgentType",
+      "@type": "@id"
+    },
+    "backedByCredential": {
+      "@id": "cr:backedByCredential",
+      "@type": "@id"
+    },
+    "basedOnDoseOptimization": {
+      "@id": "cr:basedOnDoseOptimization",
+      "@type": "@id"
+    },
+    "blindingConstraint": {
+      "@id": "cr:blindingConstraint",
+      "@type": "@id"
+    },
+    "blindingScope": "cr:blindingScope",
+    "boundConcept": {
+      "@id": "cr:boundConcept",
+      "@type": "@id"
+    },
+    "builtOnLock": {
+      "@id": "cr:builtOnLock",
+      "@type": "@id"
+    },
+    "capaStatus": "cr:capaStatus",
+    "capaType": "cr:capaType",
+    "capturedDuring": {
+      "@id": "cr:capturedDuring",
+      "@type": "@id"
+    },
+    "causalityVerdict": "cr:causalityVerdict",
+    "certifiedCopyOf": {
+      "@id": "cr:certifiedCopyOf",
+      "@type": "@id"
+    },
+    "citesShape": {
+      "@id": "cr:citesShape",
+      "@type": "@id"
+    },
+    "clinicalReviewAt": "cr:clinicalReviewAt",
+    "closesConsent": {
+      "@id": "cr:closesConsent",
+      "@type": "@id"
+    },
+    "codedAs": {
+      "@id": "cr:codedAs",
+      "@type": "@id"
+    },
+    "collectedAt": {
+      "@id": "cr:collectedAt",
+      "@type": "@id"
+    },
+    "collectedFrom": {
+      "@id": "hcls:collectedFrom",
+      "@type": "@id"
+    },
+    "concernsStudy": {
+      "@id": "cr:concernsStudy",
+      "@type": "@id"
+    },
+    "conductedAt": {
+      "@id": "cr:conductedAt",
+      "@type": "@id"
+    },
+    "confidence": "cx:confidence",
+    "confirmedAt": "cx:confirmedAt",
+    "confirmedBy": {
+      "@id": "cx:confirmedBy",
+      "@type": "@id"
+    },
+    "consentDate": "cr:consentDate",
+    "consentFormIRI": "cr:consentFormIRI",
+    "consentStatus": "cr:consentStatus",
+    "consentSubject": {
+      "@id": "hcls:consentSubject",
+      "@type": "@id"
+    },
+    "consentVersion": "cr:consentVersion",
+    "consumes": {
+      "@id": "cr:consumes",
+      "@type": "@id"
+    },
+    "contains": {
+      "@id": "hcls:contains",
+      "@type": "@id"
+    },
+    "containsSourceData": {
+      "@id": "cr:containsSourceData",
+      "@type": "@id"
+    },
+    "controllerOrg": {
+      "@id": "cr:controllerOrg",
+      "@type": "@id"
+    },
+    "country": "cr:country",
+    "cr": "https://top.scientix.ai/cr/v1#",
+    "credentialOf": {
+      "@id": "cr:credentialOf",
+      "@type": "@id"
+    },
+    "criterionText": "cr:criterionText",
+    "criterionType": "cr:criterionType",
+    "csrForStudy": {
+      "@id": "cr:csrForStudy",
+      "@type": "@id"
+    },
+    "cta": {
+      "@id": "cr:cta",
+      "@type": "@id"
+    },
+    "ctcaeGrade": "cr:ctcaeGrade",
+    "ctcaeTerm": {
+      "@id": "cr:ctcaeTerm",
+      "@type": "@id"
+    },
+    "ctcaeVersion": "cr:ctcaeVersion",
+    "cx": "https://top.scientix.ai/crosswalk/v1#",
+    "dataLoader": "pne:dataLoader",
+    "dataQueryRate": "cr:dataQueryRate",
+    "dataSource": "pne:dataSource",
+    "daysToQueryResolution": "cr:daysToQueryResolution",
+    "decidesStudy": {
+      "@id": "cr:decidesStudy",
+      "@type": "@id"
+    },
+    "decisionAtGate": {
+      "@id": "cr:decisionAtGate",
+      "@type": "@id"
+    },
+    "decisionMadeBy": {
+      "@id": "cr:decisionMadeBy",
+      "@type": "@id"
+    },
+    "decisionOutcome": {
+      "@id": "cr:decisionOutcome",
+      "@type": "@id"
+    },
+    "decisionRationale": "cr:decisionRationale",
+    "decisionSite": {
+      "@id": "cr:decisionSite",
+      "@type": "@id"
+    },
+    "decisionStudy": {
+      "@id": "cr:decisionStudy",
+      "@type": "@id"
+    },
+    "declaredUnitConcept": {
+      "@id": "cr:declaredUnitConcept",
+      "@type": "@id"
+    },
+    "definedBy": {
+      "@id": "cr:definedBy",
+      "@type": "@id"
+    },
+    "delegate": {
+      "@id": "cr:delegate",
+      "@type": "@id"
+    },
+    "delegatedCapability": {
+      "@id": "cr:delegatedCapability",
+      "@type": "@id"
+    },
+    "delegator": {
+      "@id": "cr:delegator",
+      "@type": "@id"
+    },
+    "delimiter": "cr:delimiter",
+    "deliveredUnder": {
+      "@id": "cr:deliveredUnder",
+      "@type": "@id"
+    },
+    "derivedFlag": "cr:derivedFlag",
+    "derivedFromCollection": {
+      "@id": "cr:derivedFromCollection",
+      "@type": "@id"
+    },
+    "deviationCategory": "cr:deviationCategory",
+    "documentHash": "cr:documentHash",
+    "dpaEffectiveDate": "cr:dpaEffectiveDate",
+    "dsrDeadline": "cr:dsrDeadline",
+    "dsrForSubject": {
+      "@id": "cr:dsrForSubject",
+      "@type": "@id"
+    },
+    "dsrStatus": "cr:dsrStatus",
+    "dsrType": "cr:dsrType",
+    "eCRF": "cr:eCRF",
+    "eCTDSubmission": "cr:eCTDSubmission",
+    "effectiveFrom": "cr:effectiveFrom",
+    "effectiveTo": "cr:effectiveTo",
+    "encoding": "cr:encoding",
+    "endpointEstimand": {
+      "@id": "cr:endpointEstimand",
+      "@type": "@id"
+    },
+    "endpointText": "pne:endpointText",
+    "endpointTimepoint": {
+      "@id": "cr:endpointTimepoint",
+      "@type": "@id"
+    },
+    "endpointType": "cr:endpointType",
+    "enrolledInArm": {
+      "@id": "cr:enrolledInArm",
+      "@type": "@id"
+    },
+    "enrolledPerson": {
+      "@id": "cr:enrolledPerson",
+      "@type": "@id"
+    },
+    "enrollmentDate": "cr:enrollmentDate",
+    "enrollmentRate": "cr:enrollmentRate",
+    "executesAction": {
+      "@id": "hcls:executesAction",
+      "@type": "@id"
+    },
+    "exercisesCapability": {
+      "@id": "cr:exercisesCapability",
+      "@type": "@id"
+    },
+    "fileFormat": "cr:fileFormat",
+    "flaggedBy": {
+      "@id": "cr:flaggedBy",
+      "@type": "@id"
+    },
+    "flags": {
+      "@id": "cr:flags",
+      "@type": "@id"
+    },
+    "followUpType": "cr:followUpType",
+    "followsUp": {
+      "@id": "cr:followsUp",
+      "@type": "@id"
+    },
+    "forDataScope": {
+      "@id": "cr:forDataScope",
+      "@type": "@id"
+    },
+    "forParticipant": {
+      "@id": "cr:forParticipant",
+      "@type": "@id"
+    },
+    "forStudy": {
+      "@id": "cr:forStudy",
+      "@type": "@id"
+    },
+    "forStudySite": {
+      "@id": "cr:forStudySite",
+      "@type": "@id"
+    },
+    "forSubject": {
+      "@id": "cr:forSubject",
+      "@type": "@id"
+    },
+    "fromAntecedent": {
+      "@id": "cr:fromAntecedent",
+      "@type": "@id"
+    },
+    "fromService": {
+      "@id": "cr:fromService",
+      "@type": "@id"
+    },
+    "fromState": "cr:fromState",
+    "fromTimeline": {
+      "@id": "cr:fromTimeline",
+      "@type": "@id"
+    },
+    "givesConsent": {
+      "@id": "hcls:givesConsent",
+      "@type": "@id"
+    },
+    "hasActivityOccurrence": {
+      "@id": "cr:hasActivityOccurrence",
+      "@type": "@id"
+    },
+    "hasActivityTemplate": {
+      "@id": "cr:hasActivityTemplate",
+      "@type": "@id"
+    },
+    "hasAliquot": {
+      "@id": "cr:hasAliquot",
+      "@type": "@id"
+    },
+    "hasArm": {
+      "@id": "cr:hasArm",
+      "@type": "@id"
+    },
+    "hasAuditTrail": {
+      "@id": "cr:hasAuditTrail",
+      "@type": "@id"
+    },
+    "hasBriefingBook": {
+      "@id": "cr:hasBriefingBook",
+      "@type": "@id"
+    },
+    "hasCertifiedCopy": {
+      "@id": "cr:hasCertifiedCopy",
+      "@type": "@id"
+    },
+    "hasConsent": {
+      "@id": "cr:hasConsent",
+      "@type": "@id"
+    },
+    "hasCustodyEvent": {
+      "@id": "cr:hasCustodyEvent",
+      "@type": "@id"
+    },
+    "hasDataElement": {
+      "@id": "cr:hasDataElement",
+      "@type": "@id"
+    },
+    "hasEligibilityCriterion": {
+      "@id": "cr:hasEligibilityCriterion",
+      "@type": "@id"
+    },
+    "hasEndpoint": {
+      "@id": "cr:hasEndpoint",
+      "@type": "@id"
+    },
+    "hasEnrollment": {
+      "@id": "cr:hasEnrollment",
+      "@type": "@id"
+    },
+    "hasItem": {
+      "@id": "cr:hasItem",
+      "@type": "@id"
+    },
+    "hasItemGroup": {
+      "@id": "cr:hasItemGroup",
+      "@type": "@id"
+    },
+    "hasMitigationPlan": {
+      "@id": "cr:hasMitigationPlan",
+      "@type": "@id"
+    },
+    "hasObservation": {
+      "@id": "cr:hasObservation",
+      "@type": "@id"
+    },
+    "hasPlannedActivity": {
+      "@id": "cr:hasPlannedActivity",
+      "@type": "@id"
+    },
+    "hasPlannedEncounter": {
+      "@id": "cr:hasPlannedEncounter",
+      "@type": "@id"
+    },
+    "hasPlannedVisit": {
+      "@id": "cr:hasPlannedVisit",
+      "@type": "@id"
+    },
+    "hasProtocolVersion": {
+      "@id": "cr:hasProtocolVersion",
+      "@type": "@id"
+    },
+    "hasQuery": {
+      "@id": "cr:hasQuery",
+      "@type": "@id"
+    },
+    "hasQuestion": {
+      "@id": "cr:hasQuestion",
+      "@type": "@id"
+    },
+    "hasRiskRegister": {
+      "@id": "cr:hasRiskRegister",
+      "@type": "@id"
+    },
+    "hasSection": {
+      "@id": "cr:hasSection",
+      "@type": "@id"
+    },
+    "hasVisitDefinition": {
+      "@id": "cr:hasVisitDefinition",
+      "@type": "@id"
+    },
+    "hasWorkStream": {
+      "@id": "cr:hasWorkStream",
+      "@type": "@id"
+    },
+    "hcls": "https://top.scientix.ai/hcls/v1#",
+    "identifiedIn": {
+      "@id": "cr:identifiedIn",
+      "@type": "@id"
+    },
+    "identifiesAntecedent": {
+      "@id": "cr:identifiesAntecedent",
+      "@type": "@id"
+    },
+    "inItemGroup": {
+      "@id": "cr:inItemGroup",
+      "@type": "@id"
+    },
+    "includesArtifact": {
+      "@id": "cr:includesArtifact",
+      "@type": "@id"
+    },
+    "includesDataset": {
+      "@id": "cr:includesDataset",
+      "@type": "@id"
+    },
+    "includesDefine": {
+      "@id": "cr:includesDefine",
+      "@type": "@id"
+    },
+    "includesReport": {
+      "@id": "cr:includesReport",
+      "@type": "@id"
+    },
+    "inferredBy": {
+      "@id": "cx:inferredBy",
+      "@type": "@id"
+    },
+    "instantiatesTemplate": {
+      "@id": "cr:instantiatesTemplate",
+      "@type": "@id"
+    },
+    "interpretation": "cr:interpretation",
+    "intoStudy": {
+      "@id": "cr:intoStudy",
+      "@type": "@id"
+    },
+    "involvesObject": {
+      "@id": "hcls:involvesObject",
+      "@type": "@id"
+    },
+    "irbApproval": {
+      "@id": "cr:irbApproval",
+      "@type": "@id"
+    },
+    "jobOfAgentType": {
+      "@id": "hcls:jobOfAgentType",
+      "@type": "@id"
+    },
+    "jobTrigger": "hcls:jobTrigger",
+    "justification": {
+      "@id": "cx:justification",
+      "@type": "@id"
+    },
+    "lawfulBasisDescription": "cr:lawfulBasisDescription",
+    "locatedAt": {
+      "@id": "hcls:locatedAt",
+      "@type": "@id"
+    },
+    "loadedAt": "pne:loadedAt",
+    "lockType": "cr:lockType",
+    "locksStudy": {
+      "@id": "cr:locksStudy",
+      "@type": "@id"
+    },
+    "lplvForStudy": {
+      "@id": "cr:lplvForStudy",
+      "@type": "@id"
+    },
+    "mandatoryElement": "cr:mandatoryElement",
+    "manifestsAs": {
+      "@id": "cr:manifestsAs",
+      "@type": "@id"
+    },
+    "mappingDate": "cx:mappingDate",
+    "mappingMethod": "cx:mappingMethod",
+    "mappingRationale": "cx:mappingRationale",
+    "measures": {
+      "@id": "cr:measures",
+      "@type": "@id"
+    },
+    "measuresEndpoint": {
+      "@id": "cr:measuresEndpoint",
+      "@type": "@id"
+    },
+    "meddraDictionaryVersion": "cr:meddraDictionaryVersion",
+    "meddraPreferredTerm": {
+      "@id": "cr:meddraPreferredTerm",
+      "@type": "@id"
+    },
+    "meddraSystemOrganClass": {
+      "@id": "cr:meddraSystemOrganClass",
+      "@type": "@id"
+    },
+    "meetingAgency": {
+      "@id": "cr:meetingAgency",
+      "@type": "@id"
+    },
+    "meetingDate": "cr:meetingDate",
+    "meetingOutcome": "cr:meetingOutcome",
+    "meetingType": "cr:meetingType",
+    "metricsForSite": {
+      "@id": "cr:metricsForSite",
+      "@type": "@id"
+    },
+    "mitigates": {
+      "@id": "cr:mitigates",
+      "@type": "@id"
+    },
+    "modelVersion": "top:modelVersion",
+    "monitoringStrategy": "cr:monitoringStrategy",
+    "monitors": {
+      "@id": "cr:monitors",
+      "@type": "@id"
+    },
+    "name": "https://schema.org/name",
+    "numericValue": "cr:numericValue",
+    "objectId": {
+      "@id": "cx:objectId",
+      "@type": "@id"
+    },
+    "observationForSubject": {
+      "@id": "cr:observationForSubject",
+      "@type": "@id"
+    },
+    "occursIn": {
+      "@id": "hcls:occursIn",
+      "@type": "@id"
+    },
+    "odmOID": "cr:odmOID",
+    "ofArtifactType": {
+      "@id": "cr:ofArtifactType",
+      "@type": "@id"
+    },
+    "ofProtocolVersion": {
+      "@id": "cr:ofProtocolVersion",
+      "@type": "@id"
+    },
+    "offsetDays": "cr:offsetDays",
+    "offsetHours": "cr:offsetHours",
+    "onForm": {
+      "@id": "cr:onForm",
+      "@type": "@id"
+    },
+    "onSample": {
+      "@id": "cr:onSample",
+      "@type": "@id"
+    },
+    "operatesOn": {
+      "@id": "hcls:operatesOn",
+      "@type": "@id"
+    },
+    "overseesConductOf": {
+      "@id": "cr:overseesConductOf",
+      "@type": "@id"
+    },
+    "packageForSite": {
+      "@id": "cr:packageForSite",
+      "@type": "@id"
+    },
+    "packageForStudy": {
+      "@id": "cr:packageForStudy",
+      "@type": "@id"
+    },
+    "packagesSpecification": {
+      "@id": "cr:packagesSpecification",
+      "@type": "@id"
+    },
+    "parameterCode": "cr:parameterCode",
+    "participantStatus": "cr:participantStatus",
+    "perEstimand": {
+      "@id": "cr:perEstimand",
+      "@type": "@id"
+    },
+    "perVisitDefinition": {
+      "@id": "cr:perVisitDefinition",
+      "@type": "@id"
+    },
+    "performedBy": {
+      "@id": "cr:performedBy",
+      "@type": "@id"
+    },
+    "performedInVisit": {
+      "@id": "cr:performedInVisit",
+      "@type": "@id"
+    },
+    "phiClassification": "cr:phiClassification",
+    "placedOn": {
+      "@id": "cr:placedOn",
+      "@type": "@id"
+    },
+    "plannedEnrollment": "cr:plannedEnrollment",
+    "plannedStudyDay": "cr:plannedStudyDay",
+    "pne": "https://top.scientix.ai/pne-ce/v1#",
+    "precededByAct": {
+      "@id": "cr:precededByAct",
+      "@type": "@id"
+    },
+    "precedes": {
+      "@id": "hcls:precedes",
+      "@type": "@id"
+    },
+    "predicateId": {
+      "@id": "cx:predicateId",
+      "@type": "@id"
+    },
+    "presentsResult": {
+      "@id": "cr:presentsResult",
+      "@type": "@id"
+    },
+    "presentsTLF": {
+      "@id": "cr:presentsTLF",
+      "@type": "@id"
+    },
+    "prespecifiedIn": {
+      "@id": "cr:prespecifiedIn",
+      "@type": "@id"
+    },
+    "principalInvestigator": {
+      "@id": "cr:principalInvestigator",
+      "@type": "@id"
+    },
+    "processingPurposes": {
+      "@id": "cr:processingPurposes",
+      "@type": "@id"
+    },
+    "processorOrg": {
+      "@id": "cr:processorOrg",
+      "@type": "@id"
+    },
+    "producedAgreement": {
+      "@id": "cr:producedAgreement",
+      "@type": "@id"
+    },
+    "produces": {
+      "@id": "cr:produces",
+      "@type": "@id"
+    },
+    "producesSpecimen": {
+      "@id": "cr:producesSpecimen",
+      "@type": "@id"
+    },
+    "projectsEncounter": {
+      "@id": "cr:projectsEncounter",
+      "@type": "@id"
+    },
+    "promptTemplate": "top:promptTemplate",
+    "proposedPosition": "cr:proposedPosition",
+    "proposesDesign": {
+      "@id": "cr:proposesDesign",
+      "@type": "@id"
+    },
+    "protocolDeviationRate": "cr:protocolDeviationRate",
+    "prov": "http://www.w3.org/ns/prov#",
+    "providerFolder": "cr:providerFolder",
+    "queryOn": {
+      "@id": "cr:queryOn",
+      "@type": "@id"
+    },
+    "randomizationRatio": "cr:randomizationRatio",
+    "ratifiedBy": {
+      "@id": "cr:ratifiedBy",
+      "@type": "@id"
+    },
+    "realizationOf": {
+      "@id": "hcls:realizationOf",
+      "@type": "@id"
+    },
+    "realizes": {
+      "@id": "cr:realizes",
+      "@type": "@id"
+    },
+    "receiverFolder": "cr:receiverFolder",
+    "recordedInTMF": {
+      "@id": "cr:recordedInTMF",
+      "@type": "@id"
+    },
+    "referenceRangeHigh": "cr:referenceRangeHigh",
+    "referenceRangeLow": "cr:referenceRangeLow",
+    "referencesLegalDocument": {
+      "@id": "cr:referencesLegalDocument",
+      "@type": "@id"
+    },
+    "referencesProfile": {
+      "@id": "cr:referencesProfile",
+      "@type": "@id"
+    },
+    "relativeTo": {
+      "@id": "cr:relativeTo",
+      "@type": "@id"
+    },
+    "reopens": {
+      "@id": "cr:reopens",
+      "@type": "@id"
+    },
+    "repeatIntervalDays": "cr:repeatIntervalDays",
+    "repeatUntilDay": "cr:repeatUntilDay",
+    "replyTo": {
+      "@id": "cr:replyTo",
+      "@type": "@id"
+    },
+    "reportGeneratedAt": "cr:reportGeneratedAt",
+    "reportingDeadline": "cr:reportingDeadline",
+    "reportsEvent": {
+      "@id": "cr:reportsEvent",
+      "@type": "@id"
+    },
+    "reportsResult": {
+      "@id": "cr:reportsResult",
+      "@type": "@id"
+    },
+    "requestsService": {
+      "@id": "cr:requestsService",
+      "@type": "@id"
+    },
+    "requiresCredential": {
+      "@id": "cr:requiresCredential",
+      "@type": "@id"
+    },
+    "resolutionAttestedBy": {
+      "@id": "cr:resolutionAttestedBy",
+      "@type": "@id"
+    },
+    "resolutionConfidence": "cr:resolutionConfidence",
+    "resolutionStatus": "cr:resolutionStatus",
+    "resolvedAgainstVersion": "cr:resolvedAgainstVersion",
+    "resolvedBy": {
+      "@id": "cr:resolvedBy",
+      "@type": "@id"
+    },
+    "resolvedFrom": {
+      "@id": "cr:resolvedFrom",
+      "@type": "@id"
+    },
+    "restsOn": {
+      "@id": "cr:restsOn",
+      "@type": "@id"
+    },
+    "retentionBasis": {
+      "@id": "cr:retentionBasis",
+      "@type": "@id"
+    },
+    "retentionPeriod": "cr:retentionPeriod",
+    "retrievedFrom": "cx:retrievedFrom",
+    "reviewStatus": "cx:reviewStatus",
+    "reviewsResult": {
+      "@id": "cr:reviewsResult",
+      "@type": "@id"
+    },
+    "riskLevel": "cr:riskLevel",
+    "riskScore": "cr:riskScore",
+    "scheduleForSubject": {
+      "@id": "cr:scheduleForSubject",
+      "@type": "@id"
+    },
+    "scopeSpecification": {
+      "@id": "cr:scopeSpecification",
+      "@type": "@id"
+    },
+    "scopeVendor": {
+      "@id": "cr:scopeVendor",
+      "@type": "@id"
+    },
+    "screenFailureRate": "cr:screenFailureRate",
+    "screeningNumber": "cr:screeningNumber",
+    "sdvIntensity": "cr:sdvIntensity",
+    "sdvStatus": "cr:sdvStatus",
+    "sectionKind": "cr:sectionKind",
+    "sectionNumber": "cr:sectionNumber",
+    "sectionTitle": "cr:sectionTitle",
+    "severity": "cr:severity",
+    "sex": "cr:sex",
+    "significantDigits": "cr:significantDigits",
+    "siv": {
+      "@id": "cr:siv",
+      "@type": "@id"
+    },
+    "sourceContext": "top:sourceContext",
+    "sourceSystem": "cr:sourceSystem",
+    "sourceUri": "cr:sourceUri",
+    "specForStudy": {
+      "@id": "cr:specForStudy",
+      "@type": "@id"
+    },
+    "specimen": {
+      "@id": "cr:specimen",
+      "@type": "@id"
+    },
+    "specimenCollectedAt": "cr:specimenCollectedAt",
+    "specimenReceivedAt": "cr:specimenReceivedAt",
+    "sponsorAwareAt": "cr:sponsorAwareAt",
+    "sponsoredBy": {
+      "@id": "cr:sponsoredBy",
+      "@type": "@id"
+    },
+    "stratificationFactor": "cr:stratificationFactor",
+    "streamForSite": {
+      "@id": "cr:streamForSite",
+      "@type": "@id"
+    },
+    "streamStatus": "cr:streamStatus",
+    "studyId": "cr:studyId",
+    "studyPhase": "pne:studyPhase",
+    "studyTitle": "pne:studyTitle",
+    "subjectId": {
+      "@id": "cx:subjectId",
+      "@type": "@id"
+    },
+    "submissionDate": "cr:submissionDate",
+    "submissionForStudy": {
+      "@id": "cr:submissionForStudy",
+      "@type": "@id"
+    },
+    "submissionType": "cr:submissionType",
+    "submittedAt": "cr:submittedAt",
+    "submittedTo": {
+      "@id": "cr:submittedTo",
+      "@type": "@id"
+    },
+    "successSignal": "hcls:successSignal",
+    "susarUnexpected": "cr:susarUnexpected",
+    "targetAccrual": "cr:targetAccrual",
+    "targetDate": "cr:targetDate",
+    "threatens": {
+      "@id": "cr:threatens",
+      "@type": "@id"
+    },
+    "timing": {
+      "@id": "cr:timing",
+      "@type": "@id"
+    },
+    "timingType": "cr:timingType",
+    "tlfType": "cr:tlfType",
+    "toState": "cr:toState",
+    "top": "https://top.scientix.ai/v1#",
+    "tracesToNonclinical": {
+      "@id": "cr:tracesToNonclinical",
+      "@type": "@id"
+    },
+    "transferEnvironment": "cr:transferEnvironment",
+    "transferSchedule": "cr:transferSchedule",
+    "transmissionMethod": "cr:transmissionMethod",
+    "transmissionType": "cr:transmissionType",
+    "triggers": {
+      "@id": "cr:triggers",
+      "@type": "@id"
+    },
+    "underDelegation": {
+      "@id": "cr:underDelegation",
+      "@type": "@id"
+    },
+    "underUnlock": {
+      "@id": "cr:underUnlock",
+      "@type": "@id"
+    },
+    "unit": "cr:unit",
+    "unlockReason": "cr:unlockReason",
+    "valueRangeHigh": "cr:valueRangeHigh",
+    "valueRangeLow": "cr:valueRangeLow",
+    "vendorApiStyle": "cr:vendorApiStyle",
+    "vendorDocumentation": "cr:vendorDocumentation",
+    "vendorTerm": "cr:vendorTerm",
+    "verificationStatus": "cx:verificationStatus",
+    "verifiedBy": {
+      "@id": "cr:verifiedBy",
+      "@type": "@id"
+    },
+    "visitMode": "cr:visitMode",
+    "visitName": "cr:visitName",
+    "visitNumber": "cr:visitNumber",
+    "visitStatus": "cr:visitStatus",
+    "visitType": "cr:visitType",
+    "window": {
+      "@id": "cr:window",
+      "@type": "@id"
+    },
+    "windowEnd": "cr:windowEnd",
+    "windowLowerDays": "cr:windowLowerDays",
+    "windowStart": "cr:windowStart",
+    "windowStatus": "cr:windowStatus",
+    "windowUpperDays": "cr:windowUpperDays",
+    "withdrawalDate": "cr:withdrawalDate",
+    "withdrawalReason": "cr:withdrawalReason",
+    "witnessedBy": {
+      "@id": "cr:witnessedBy",
+      "@type": "@id"
+    },
+    "yieldsDesign": {
+      "@id": "cr:yieldsDesign",
+      "@type": "@id"
+    },
+    "yieldsResult": {
+      "@id": "cr:yieldsResult",
+      "@type": "@id"
+    }
+  }
+}

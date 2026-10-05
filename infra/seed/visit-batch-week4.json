@@ -1,0 +1,264 @@
+[
+  {
+    "@context": "http://web:8080/context/pne-context.jsonld",
+    "id": "urn:ngsi-ld:VisitOccurrence:cardio-118-p2201-v3",
+    "type": "VisitOccurrence",
+    "forParticipant": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:Participant:cardio-118-hou-07-p2201"
+    },
+    "atStudySite": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:StudySite:HOU-07"
+    },
+    "perVisitDefinition": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:VisitDefinition:CARDIO-118-v3"
+    },
+    "visitType": {
+      "type": "Property",
+      "value": "SCHEDULED"
+    },
+    "visitMode": {
+      "type": "Property",
+      "value": "IN_PERSON"
+    },
+    "visitStatus": {
+      "type": "Property",
+      "value": "COMPLETED"
+    },
+    "windowStatus": {
+      "type": "Property",
+      "value": "IN_WINDOW"
+    },
+    "actualStartDate": {
+      "type": "Property",
+      "value": "2026-04-06T09:00:00Z"
+    },
+    "actualEndDate": {
+      "type": "Property",
+      "value": "2026-04-06T10:30:00Z"
+    }
+  },
+  {
+    "@context": "http://web:8080/context/pne-context.jsonld",
+    "id": "urn:ngsi-ld:ClinicalObservation:cardio-118-p2201-v3-sysbp",
+    "type": "ClinicalObservation",
+    "observationForSubject": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:StudySubject:cardio-118-s2201"
+    },
+    "forParticipant": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:Participant:cardio-118-hou-07-p2201"
+    },
+    "atVisit": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:VisitOccurrence:cardio-118-p2201-v3"
+    },
+    "parameterCode": {
+      "type": "Property",
+      "value": "SYSBP"
+    },
+    "numericValue": {
+      "type": "Property",
+      "value": 127,
+      "observedAt": "2026-04-06T09:15:00Z"
+    },
+    "unit": {
+      "type": "Property",
+      "value": "mmHg"
+    }
+  },
+  {
+    "@context": "http://web:8080/context/pne-context.jsonld",
+    "id": "urn:ngsi-ld:ClinicalObservation:cardio-118-p2201-v3-diabp",
+    "type": "ClinicalObservation",
+    "observationForSubject": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:StudySubject:cardio-118-s2201"
+    },
+    "forParticipant": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:Participant:cardio-118-hou-07-p2201"
+    },
+    "atVisit": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:VisitOccurrence:cardio-118-p2201-v3"
+    },
+    "parameterCode": {
+      "type": "Property",
+      "value": "DIABP"
+    },
+    "numericValue": {
+      "type": "Property",
+      "value": 83,
+      "observedAt": "2026-04-06T09:15:00Z"
+    },
+    "unit": {
+      "type": "Property",
+      "value": "mmHg"
+    }
+  },
+  {
+    "@context": "http://web:8080/context/pne-context.jsonld",
+    "id": "urn:ngsi-ld:ClinicalObservation:cardio-118-p2201-v3-hr",
+    "type": "ClinicalObservation",
+    "observationForSubject": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:StudySubject:cardio-118-s2201"
+    },
+    "forParticipant": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:Participant:cardio-118-hou-07-p2201"
+    },
+    "atVisit": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:VisitOccurrence:cardio-118-p2201-v3"
+    },
+    "parameterCode": {
+      "type": "Property",
+      "value": "HR"
+    },
+    "numericValue": {
+      "type": "Property",
+      "value": 71,
+      "observedAt": "2026-04-06T09:15:00Z"
+    },
+    "unit": {
+      "type": "Property",
+      "value": "beats/min"
+    }
+  },
+  {
+    "@context": "http://web:8080/context/pne-context.jsonld",
+    "id": "urn:ngsi-ld:VisitOccurrence:cardio-118-p2202-v3",
+    "type": "VisitOccurrence",
+    "forParticipant": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:Participant:cardio-118-hou-07-p2202"
+    },
+    "atStudySite": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:StudySite:HOU-07"
+    },
+    "perVisitDefinition": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:VisitDefinition:CARDIO-118-v3"
+    },
+    "visitType": {
+      "type": "Property",
+      "value": "SCHEDULED"
+    },
+    "visitMode": {
+      "type": "Property",
+      "value": "IN_PERSON"
+    },
+    "visitStatus": {
+      "type": "Property",
+      "value": "COMPLETED"
+    },
+    "windowStatus": {
+      "type": "Property",
+      "value": "IN_WINDOW"
+    },
+    "actualStartDate": {
+      "type": "Property",
+      "value": "2026-04-13T09:00:00Z"
+    },
+    "actualEndDate": {
+      "type": "Property",
+      "value": "2026-04-13T10:30:00Z"
+    }
+  },
+  {
+    "@context": "http://web:8080/context/pne-context.jsonld",
+    "id": "urn:ngsi-ld:ClinicalObservation:cardio-118-p2202-v3-sysbp",
+    "type": "ClinicalObservation",
+    "observationForSubject": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:StudySubject:cardio-118-s2202"
+    },
+    "forParticipant": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:Participant:cardio-118-hou-07-p2202"
+    },
+    "atVisit": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:VisitOccurrence:cardio-118-p2202-v3"
+    },
+    "parameterCode": {
+      "type": "Property",
+      "value": "SYSBP"
+    },
+    "numericValue": {
+      "type": "Property",
+      "value": 133,
+      "observedAt": "2026-04-13T09:15:00Z"
+    },
+    "unit": {
+      "type": "Property",
+      "value": "mmHg"
+    }
+  },
+  {
+    "@context": "http://web:8080/context/pne-context.jsonld",
+    "id": "urn:ngsi-ld:ClinicalObservation:cardio-118-p2202-v3-diabp",
+    "type": "ClinicalObservation",
+    "observationForSubject": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:StudySubject:cardio-118-s2202"
+    },
+    "forParticipant": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:Participant:cardio-118-hou-07-p2202"
+    },
+    "atVisit": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:VisitOccurrence:cardio-118-p2202-v3"
+    },
+    "parameterCode": {
+      "type": "Property",
+      "value": "DIABP"
+    },
+    "numericValue": {
+      "type": "Property",
+      "value": 85,
+      "observedAt": "2026-04-13T09:15:00Z"
+    },
+    "unit": {
+      "type": "Property",
+      "value": "mmHg"
+    }
+  },
+  {
+    "@context": "http://web:8080/context/pne-context.jsonld",
+    "id": "urn:ngsi-ld:ClinicalObservation:cardio-118-p2202-v3-hr",
+    "type": "ClinicalObservation",
+    "observationForSubject": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:StudySubject:cardio-118-s2202"
+    },
+    "forParticipant": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:Participant:cardio-118-hou-07-p2202"
+    },
+    "atVisit": {
+      "type": "Relationship",
+      "object": "urn:ngsi-ld:VisitOccurrence:cardio-118-p2202-v3"
+    },
+    "parameterCode": {
+      "type": "Property",
+      "value": "HR"
+    },
+    "numericValue": {
+      "type": "Property",
+      "value": 70,
+      "observedAt": "2026-04-13T09:15:00Z"
+    },
+    "unit": {
+      "type": "Property",
+      "value": "beats/min"
+    }
+  }
+]
