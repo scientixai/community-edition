@@ -397,12 +397,26 @@ def visit_report(g: Graph, visit: str, participant: str, site: str, implemented:
     steps = [check_step(g, s, participant, site) for s in _visit_steps(g, visit)]
     start = g.cur(visit, "actualStartDate")
     trip = [dict(c, step=s["step"], at=s["at"]) for s in steps for c in s["checks"] if not c["ok"]]
+    in_effect = steps[0]["protocolInEffect"] if steps else (
+        _protocol_label(protocol_at(g, site, parse_time(start))) if start else None)
     return {
         "visit": g.cur(visit, "visitName"), "entity": visit, "start": start,
         "afterImplementation": bool(implemented and start and parse_time(start) >= implemented),
-        "protocolInEffect": steps[0]["protocolInEffect"] if steps else None,
-        "steps": steps, "possibleIssues": trip,
+        "protocolInEffect": in_effect,
+        "steps": steps, "observations": _observations(g, visit), "possibleIssues": trip,
     }
+
+
+def _observations(g: Graph, visit: str) -> list[dict]:
+    """Measurements recorded at a visit (vital signs and the like), with their evidence."""
+    out = []
+    for o in g.pointing_at("ClinicalObservation", "atVisit", visit):
+        eid = o["id"]
+        out.append({"entity": eid, "parameter": g.cur(eid, "parameterCode"),
+                    "value": g.cur(eid, "numericValue"), "unit": g.cur(eid, "unit"),
+                    "position": g.cur(eid, "position"),
+                    "evidence": g.evidence(eid, "numericValue")})
+    return sorted(out, key=lambda x: x["parameter"] or "")
 
 
 def ask_participant(participant: str, site_ref: str | None = None, protocol_ref: str | None = None) -> dict:

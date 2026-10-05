@@ -187,7 +187,8 @@ services:
       PNE_BROKER_URL: http://scorpio:9090
       PNE_CONTEXT_URL: http://web:8080/context/pne-context.jsonld
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
-      PNE_ADAPTIVE_MODEL: ${PNE_ADAPTIVE_MODEL:-claude-opus-4-8}
+      ANTHROPIC_WORKSPACE_ID: ${ANTHROPIC_WORKSPACE_ID:-}
+      PNE_ADAPTIVE_MODEL: ${PNE_ADAPTIVE_MODEL:-claude-opus-5-5}
       PNE_STUDY_ID: ${PNE_STUDY_ID:-CARDIO-118}
       PNE_ADAPTIVE_EXECUTE: ${PNE_ADAPTIVE_EXECUTE:-}
     volumes:

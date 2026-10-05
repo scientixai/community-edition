@@ -405,7 +405,7 @@ function renderChain(a) {
   }
   h += `</div><div class="status-box ${a.possibleIssues.length ? 'bad' : 'good'}">${esc(a.summary)}</div>`;
   for (const vis of a.visits.slice().reverse()) {
-    h += `<div class="visit ${vis.afterImplementation ? '' : 'before'}"><h3>Blood draw · Participant ${esc(a.participant.number)} · ${esc(vis.visit)} · ${when(vis.start)} · protocol ${esc(vis.protocolInEffect)} in effect${vis.afterImplementation ? '' : ' (before implementation)'}</h3><ol class="stops">`;
+    h += `<div class="visit ${vis.afterImplementation ? '' : 'before'}"><h3>${vis.steps.length ? 'Blood draw' : 'Visit'} · Participant ${esc(a.participant.number)} · ${esc(vis.visit)} · ${when(vis.start)} · protocol ${esc(vis.protocolInEffect)} in effect${vis.afterImplementation ? '' : ' (before implementation)'}</h3><ol class="stops">`;
     vis.steps.forEach((s, i) => {
       const k = keep(s), pane = 'p' + k;
       const ents = [...new Set([s.entity, ...s.checks.flatMap((c) => c.evidence.map((e) => e.entity))].filter(Boolean))];
@@ -420,6 +420,20 @@ function renderChain(a) {
       });
       h += '</div></li>';
     });
+    const obs = vis.observations || [];
+    if (obs.length) {
+      const pane = 'p' + keep(obs), src = obs[0].evidence || {};
+      h += `<li data-n="${vis.steps.length + 1}"><div class="stop-head"><b>Vital signs<a class="data" onclick="toggle('${pane}')">data</a></b><span class="ev">${when(src.observedAt)} · ${esc(src.sourceSystem || '')}</span></div><ul class="facts">`;
+      for (const o of obs) {
+        h += `<li><span>${esc(o.parameter)} ${esc(o.value)} ${esc(o.unit || '')}${o.position ? ' (' + esc(o.position.toLowerCase()) + ')' : ''}</span>${ev(o.evidence)}</li>`;
+      }
+      h += `</ul><div class="datapane" id="${pane}" style="display:none"><div class="lbl">The broker records behind it</div>`;
+      obs.forEach((o, j) => {
+        h += `<div><a class="data" onclick="brokerRecord(this, '${esc(o.entity)}', '${pane}r${j}')">${esc(o.entity)}</a></div><div id="${pane}r${j}" style="display:none"></div>`;
+      });
+      h += '</div></li>';
+    }
+    if (!vis.steps.length && !obs.length) h += '<li class="muted">No steps recorded for this visit.</li>';
     h += '</ol></div>';
   }
   return h;
@@ -508,6 +522,9 @@ async function ask(text) {
 
 document.getElementById('chips').innerHTML = EXAMPLES.map((q) => `<button onclick="ask(this.textContent)">${esc(q)}</button>`).join('');
 status();
+// Deep link from the walkthrough: /asof.html?q=Show%20me%20204 asks on load.
+const deepQ = new URLSearchParams(location.search).get('q');
+if (deepQ) ask(deepQ);
 </script>
 </body>
 </html>

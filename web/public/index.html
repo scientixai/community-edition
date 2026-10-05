@@ -91,6 +91,20 @@
   footer { padding: 1.5rem; color: var(--muted); font-size: .82rem; border-top: 1px solid var(--outline); }
   footer a { color: var(--teal); }
   .spin { opacity: .55; pointer-events: none; }
+  .lbl6 { margin: .9rem 0 .2rem; color: var(--teal); font-size: .78rem; letter-spacing: .06em; text-transform: uppercase; }
+  .note6 { color: var(--cream) !important; }
+  .muted6 { color: var(--muted); font-size: .8rem; }
+  ul.calls6 { margin: .2rem 0; padding-left: 1.1rem; font-size: .84rem; color: var(--muted); }
+  code { font-family: ui-monospace, Menlo, monospace; font-size: .8rem; word-break: break-all; }
+  .tag { display: inline-block; padding: .05rem .45rem; border-radius: 3px; font-size: .75rem; border: 1px solid var(--outline); }
+  .tag.existing { color: var(--teal); border-color: var(--teal-dim); }
+  .tag.new { color: var(--cream); border-color: #7a7a5a; }
+  .tag.unresolved, .tag.duplicate, .tag.rejected { color: var(--error); border-color: #5c2b29; }
+  .blocked6 { margin-top: .8rem; padding: .6rem .8rem; border: 1px solid #5c2b29; color: var(--error); border-radius: 4px; font-size: .88rem; }
+  .commit6 { margin-top: .8rem; display: flex; gap: .6rem; align-items: center; flex-wrap: wrap; font-size: .88rem; }
+  .commit6 input { width: 10rem; }
+  .done6 { margin-top: .8rem; padding: .6rem .8rem; border: 1px solid var(--teal-dim); border-radius: 4px; font-size: .88rem; }
+  .done6 a { color: var(--teal); margin-left: .4rem; }
 </style>
 </head>
 <body>
@@ -162,12 +176,13 @@ GROUP BY VISIT, VSTESTCD ORDER BY min(VISITNUM), VSTESTCD</textarea>
 
   <div class="step">
     <h2><span class="num">6</span>The sprinkle of AI</h2>
-    <p>Natural language in, NGSI-LD entity out. Construct proposes entities;
-       commit executes the proposal when the authority gate is enabled
-       (PNE_ADAPTIVE_EXECUTE). Uses the Anthropic API when a key is
-       configured; otherwise a deterministic offline stub.</p>
-    <textarea id="statement" rows="3">Participant P2201 completed the Week 8 visit at the Houston site on June 1st, 2026. Seated systolic blood pressure was 121 mmHg.</textarea>
-    <button onclick="construct(this)">Propose entity</button>
+    <p>A statement in, NGSI-LD entities out. With an API key, Claude looks up the participant,
+       the site and their visits in the graph before it proposes, so new facts link to what is
+       already there; then the engine checks every entity and link. Nothing is written until you
+       commit, and commit needs PNE_ADAPTIVE_EXECUTE. Without a key, a deterministic offline stub.</p>
+    <textarea id="statement" rows="3">Participant 204 completed Visit 5 at Site 123 on October 5th, 2026. Seated blood pressure was 118/70.</textarea>
+    <button onclick="construct(this)">Propose entities</button>
+    <div id="out-6t"></div>
     <pre class="out" id="out-6"></pre>
   </div>
 
@@ -264,11 +279,72 @@ const files = (el) => call(el, 'out-5', async () => {
   return body.files.map((f) => f.path.padEnd(36) + f.bytes + ' bytes').join('\n') || 'lake is empty';
 });
 
-const construct = (el) => call(el, 'out-6', () =>
-  jfetch('/api/adaptive/construct', {
+const esc6 = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c]));
+const tag6 = (st) => `<span class="tag ${esc6(st)}">${esc6(st)}</span>`;
+let proposal6 = null;
+
+function renderProposal(p) {
+  const box = document.getElementById('out-6t');
+  let h = '';
+  if (p.notes) h += `<p class="note6">${esc6(p.notes)}</p>`;
+  if (p.calls && p.calls.length) {
+    h += '<div class="lbl6">Looked up in the graph first</div><ul class="calls6">' + p.calls.map((c) =>
+      `<li><code>${esc6(c.tool)}(${esc6(Object.values(c.input).join(', '))})</code> → ${esc6(
+        c.output.candidates ? (c.output.candidates.map((x) => x.iri).join(', ') || 'no match')
+        : c.output.site !== undefined ? (c.output.site ? c.output.site.iri : 'no match')
+        : c.output.visits ? c.output.visits.length + ' existing visit(s): ' + c.output.visits.map((v) => v.visitName).join(', ')
+        : JSON.stringify(c.output))}</li>`).join('') + '</ul>';
+  }
+  if (p.resolution.length) {
+    h += '<div class="lbl6">Entities</div><table><tr><th>Entity</th><th>IRI</th><th>Status</th></tr>' +
+      p.resolution.map((r) => `<tr><td>${esc6(r.label)}</td><td><code>${esc6(r.id)}</code>${r.note ? '<div class="muted6">' + esc6(r.note) + '</div>' : ''}${r.dropped ? '<div class="muted6">left out (not in the vocabulary): ' + esc6(r.dropped.join(', ')) + '</div>' : ''}</td><td>${tag6(r.status)}</td></tr>`).join('') + '</table>';
+  }
+  if (p.links.length) {
+    h += '<div class="lbl6">Links</div><table><tr><th>From</th><th>Link</th><th>To</th><th>Status</th></tr>' +
+      p.links.map((l) => `<tr><td><code>${esc6(l.from.split(':').pop())}</code></td><td>${esc6(l.attribute)}</td><td>${esc6(l.toLabel || '')} <code>${esc6(l.to)}</code></td><td>${tag6(l.status)}</td></tr>`).join('') + '</table>';
+  }
+  if (p.blocked) {
+    h += '<div class="blocked6">Not ready to commit: ' + p.reasons.map(esc6).join('; ') + '</div>';
+  } else {
+    h += `<div class="commit6"><span>${p.entities.length} new entit${p.entities.length === 1 ? 'y' : 'ies'}, every link resolved. Facts true as of ${esc6(p.observedAt)}.</span>
+      <input type="text" id="approver6" value="Presenter" aria-label="Approved by">
+      <button class="copper" onclick="commit6(this)">Commit to the broker</button>
+      ${p.executeEnabled ? '' : '<span class="muted6">(commit is off: PNE_ADAPTIVE_EXECUTE is not set, so it will be refused and logged)</span>'}</div>`;
+  }
+  box.innerHTML = h;
+}
+
+const construct = (el) => call(el, 'out-6', async () => {
+  document.getElementById('out-6t').innerHTML = '';
+  const p = await jfetch('/api/adaptive/construct', {
     method: 'POST', headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({statement: document.getElementById('statement').value}),
-  }));
+  });
+  proposal6 = p;
+  renderProposal(p);
+  return {mode: p.mode, proposalId: p.proposalId, observedAt: p.observedAt, entities: p.entities};
+});
+
+const commit6 = (el) => call(el, 'out-6', async () => {
+  const resp = await fetch('/api/adaptive/commit', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({proposalId: proposal6.proposalId, authority: {
+      approver: document.getElementById('approver6').value || 'Presenter',
+      reason: 'Approved in the walkthrough', statement: proposal6.statement}}),
+  });
+  const body = await resp.json().catch(() => ({}));
+  const box = document.getElementById('out-6t');
+  if (!resp.ok) {
+    box.insertAdjacentHTML('beforeend', `<div class="blocked6">${esc6(body.error || resp.status)}${body.reasons ? ': ' + body.reasons.map(esc6).join('; ') : ''}</div>`);
+    return body;
+  }
+  el.style.display = 'none';
+  const who = proposal6.links.find((l) => l.attribute === 'forParticipant' && l.status === 'existing' && l.toLabel);
+  const num = who ? who.toLabel.replace(/^Participant\s*/, '') : '';
+  box.insertAdjacentHTML('beforeend', `<div class="done6">Written: ${body.entityIds.length} entities, each attribute stamped observedAt ${esc6(body.observedAt)} and sourceSystem "Adaptive layer".
+    ${num ? `<a href="/asof.html?q=${encodeURIComponent('Show me ' + num)}">Ask step 7: show me ${esc6(num)}</a>` : ''}</div>`);
+  return body;
+});
 
 async function health() {
   const row = document.getElementById('status-row');

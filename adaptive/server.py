@@ -11,15 +11,20 @@ and only writes when an explicit execute gate is enabled; the decision log
 is a local append-only record.
 
 Modes:
-- anthropic: when ANTHROPIC_API_KEY is set, calls the Claude Messages API
-  directly over HTTPS (standard library only, no SDK, so the container
-  still builds offline).
+- anthropic: when ANTHROPIC_API_KEY is set, Claude first looks the graph up
+  (participants, sites, visits) and proposes entities that link to what is
+  already there (pipeline/lib/propose.py). Messages API over plain HTTPS,
+  standard library only, so the container still builds offline.
 - stub: no key needed; a deterministic parser that handles the demo
   statements (visit completion with vitals). Good for conference wifi.
 
-POST /construct {"statement": "..."} -> proposal with entities (never writes)
-POST /commit {"proposalId": "...", "entities": [...], "authority": {...}}
-  -> upsert (gated by PNE_ADAPTIVE_EXECUTE env var)
+POST /construct {"statement": "..."} -> proposal with entities and a
+  resolution report: which entities already exist, which are new, and
+  whether every link resolves (never writes)
+POST /commit {"proposalId": "...", "authority": {...}}
+  -> re-checks the stored proposal against the graph, then upserts it with
+  observedAt and sourceSystem on every attribute (gated by
+  PNE_ADAPTIVE_EXECUTE)
 """
 
 from __future__ import annotations
@@ -29,16 +34,15 @@ import json
 import os
 import re
 import secrets
-import urllib.request
 from pathlib import Path
 
 import pnehttp
+import propose
 from pnehttp import prop, rel
 
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY", "").strip()
 # Demo default model — override with PNE_ADAPTIVE_MODEL (config, not a secret).
-ANTHROPIC_MODEL = os.environ.get("PNE_ADAPTIVE_MODEL", "claude-opus-4-8")
-ANTHROPIC_URL = "https://api.anthropic.com/v1/messages"
+ANTHROPIC_MODEL = os.environ.get("PNE_ADAPTIVE_MODEL", "claude-opus-5-5")
 # Demo study id used in stub/id examples — override with PNE_STUDY_ID.
 STUDY_ID = os.environ.get("PNE_STUDY_ID", "CARDIO-118")
 ADAPTIVE_EXECUTE = os.environ.get("PNE_ADAPTIVE_EXECUTE", "").strip().lower() in ("1", "true", "yes")
@@ -64,77 +68,30 @@ def _load_allowed_config() -> tuple[list[str], dict]:
 
 
 ALLOWED_TYPES, ATTRIBUTE_VOCABULARY = _load_allowed_config()
+ALLOWED = {"types": ALLOWED_TYPES, "vocabulary": ATTRIBUTE_VOCABULARY}
 
-SYSTEM_PROMPT = """\
-You convert clinical research statements into NGSI-LD entities using the
-T.O.P. cr-domain vocabulary. Respond with a single JSON array of NGSI-LD
-entities in normalized form: each entity has an id (urn:ngsi-ld:<Type>:<slug>
-URN), a type from the allowed list, and attributes as
-{"type": "Property", "value": ...} or {"type": "Relationship", "object": ...}
-objects. Use only allowed entity types and the attribute vocabulary given.
-Follow the id conventions in the examples. Dates are ISO 8601. Respond with
-JSON only, no prose.
-"""
-
-ID_EXAMPLES = {
-    "study": f"urn:ngsi-ld:Study:{STUDY_ID}",
-    "site": "urn:ngsi-ld:StudySite:HOU-07",
-    "participant": f"urn:ngsi-ld:Participant:{STUDY_ID.lower()}-hou-07-p2201",
-    "visit": f"urn:ngsi-ld:VisitOccurrence:{STUDY_ID.lower()}-p2201-v4",
-    "visitDefinition": f"urn:ngsi-ld:VisitDefinition:{STUDY_ID}-v4",
-    "observation": f"urn:ngsi-ld:ClinicalObservation:{STUDY_ID.lower()}-p2201-v4-sysbp",
-}
+# Proposals by id, kept on the decisions volume so they survive a restart
+# (turning PNE_ADAPTIVE_EXECUTE on restarts the service). Commit writes what
+# was checked, not whatever a client sends back.
+PROPOSALS_PATH = DECISION_LOG_DIR / "proposals.jsonl"
 
 
-def call_anthropic(statement: str) -> list[dict]:
-    """One Messages API call over plain HTTPS; returns parsed entities."""
-    payload = {
-        "model": ANTHROPIC_MODEL,
-        "max_tokens": 2048,
-        "system": SYSTEM_PROMPT,
-        "messages": [
-            {
-                "role": "user",
-                "content": (
-                    "Allowed structure: "
-                    + json.dumps(
-                        {
-                            "allowedTypes": ALLOWED_TYPES,
-                            "attributeVocabulary": ATTRIBUTE_VOCABULARY,
-                            "idExamples": ID_EXAMPLES,
-                            "visitNumbers": {
-                                "Screening": 1, "Baseline": 2,
-                                "Week 4": 3, "Week 8": 4,
-                            },
-                        }
-                    )
-                    + f"\n\nStatement: {statement}"
-                ),
-            }
-        ],
-    }
-    req = urllib.request.Request(
-        ANTHROPIC_URL,
-        data=json.dumps(payload).encode(),
-        headers={
-            "Content-Type": "application/json",
-            "x-api-key": ANTHROPIC_API_KEY,
-            "anthropic-version": "2023-06-01",
-        },
-        method="POST",
-    )
-    with urllib.request.urlopen(req, timeout=120) as resp:
-        body = json.load(resp)
-    if body.get("stop_reason") == "refusal":
-        raise RuntimeError("model declined the request (stop_reason=refusal)")
-    text = next(
-        (b.get("text", "") for b in body.get("content", []) if b.get("type") == "text"),
-        "",
-    )
-    text = re.sub(r"^```(json)?|```$", "", text.strip(), flags=re.MULTILINE).strip()
-    entities = json.loads(text)
-    return entities if isinstance(entities, list) else [entities]
+def save_proposal(proposal_id: str, record: dict) -> None:
+    with PROPOSALS_PATH.open("a") as f:
+        f.write(json.dumps(dict(record, proposalId=proposal_id)) + "\n")
 
+
+def find_proposal(proposal_id: str) -> dict | None:
+    if not PROPOSALS_PATH.exists():
+        return None
+    found = None
+    with PROPOSALS_PATH.open() as f:
+        for line in f:
+            if line.strip() and proposal_id in line:
+                rec = json.loads(line)
+                if rec.get("proposalId") == proposal_id:
+                    found = rec
+    return found
 
 STUB_VISIT_RE = re.compile(
     r"[Pp]articipant\s+(?P<pat>P\d+).*?"
@@ -255,33 +212,57 @@ class AdaptiveHandler(pnehttp.JsonHandler):
                 )
             }
         
+        notes, calls, observed_at = None, [], None
         if ANTHROPIC_API_KEY:
             mode = "anthropic"
-            entities = call_anthropic(statement)
+            try:
+                raw = propose.construct(statement, ALLOWED, ANTHROPIC_MODEL)
+            except Exception as err:  # API or parse failure: say so, do not crash
+                return 502, {"mode": mode, "error": str(err)}
+            entities = raw.get("entities") or []
+            notes, calls, observed_at = raw.get("notes"), raw.get("calls", []), raw.get("observedAt")
         else:
             mode = "stub"
             try:
                 entities = stub_construct(statement)
             except ValueError as err:
                 return 422, {"mode": mode, "error": str(err)}
-        
+
+        try:
+            checked = propose.check(entities, ALLOWED)
+        except Exception as err:  # broker unreachable: report, never pretend it resolved
+            checked = {"resolution": [], "links": [], "write": [], "blocked": True,
+                       "reasons": [f"could not check against the graph: {err}"]}
+        observed_at = observed_at or datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
         proposal_id = secrets.token_urlsafe(16)
+        save_proposal(proposal_id, {"entities": checked["write"], "observedAt": observed_at,
+                                    "statement": statement})
         return 200, {
             "mode": mode,
             "proposalId": proposal_id,
-            "entities": entities,
+            "statement": statement,
+            "notes": notes,
+            "observedAt": observed_at,
+            "resolution": checked["resolution"],
+            "links": checked["links"],
+            "blocked": checked["blocked"],
+            "reasons": checked["reasons"],
+            "executeEnabled": ADAPTIVE_EXECUTE,
+            "entities": checked["write"],
+            "proposed": entities,
+            "calls": calls,
         }
 
     def commit(self, body):
-        """Execute: accepts proposal + entities, requires authority, gates on PNE_ADAPTIVE_EXECUTE."""
+        """Execute a stored proposal: requires authority, re-checks it, gates on PNE_ADAPTIVE_EXECUTE."""
         proposal_id = (body or {}).get("proposalId", "").strip()
-        entities = (body or {}).get("entities", [])
         authority = (body or {}).get("authority", {})
-        
+
         if not proposal_id:
-            return 400, {"error": 'expected {"proposalId": "...", "entities": [...], "authority": {...}}'}
-        if not entities:
-            return 400, {"error": "entities array is empty or missing"}
+            return 400, {"error": 'expected {"proposalId": "...", "authority": {...}}'}
+        proposal = find_proposal(proposal_id)
+        if not proposal:
+            return 404, {"error": "unknown proposal; propose again"}
         if not isinstance(authority, dict) or not authority:
             return 400, {
                 "error": (
@@ -289,7 +270,8 @@ class AdaptiveHandler(pnehttp.JsonHandler):
                     "fields (e.g. source, approver, reason)"
                 )
             }
-        
+        entities = proposal["entities"]
+
         if not ADAPTIVE_EXECUTE:
             record_decision(proposal_id, "denied", entities, authority)
             return 403, {
@@ -301,25 +283,33 @@ class AdaptiveHandler(pnehttp.JsonHandler):
                 "executed": False,
                 "recorded": True,
             }
-        
+
+        checked = propose.check(entities, ALLOWED)  # the graph may have changed since the proposal
+        if checked["blocked"]:
+            record_decision(proposal_id, "blocked", entities, authority)
+            return 409, {"error": "the proposal no longer checks out", "reasons": checked["reasons"],
+                         "proposalId": proposal_id, "executed": False, "recorded": True}
+
         now = datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")
         authority_source = authority.get("source") or authority.get("approver") or "adaptive-commit"
-        
+
         pnehttp.broker_upsert(
-            entities,
+            propose.stamp(checked["write"], proposal["observedAt"]),
             provenance={
                 "source": authority_source,
                 "loader": "adaptive-layer",
                 "time": now
             }
         )
-        record_decision(proposal_id, "allowed", entities, authority)
-        
+        record_decision(proposal_id, "allowed", checked["write"], authority)
+        propose.wait_for_history([e["id"] for e in checked["write"]])
+
         return 200, {
             "proposalId": proposal_id,
             "executed": True,
             "recorded": True,
-            "entityIds": [e.get("id") for e in entities if e.get("id")],
+            "observedAt": proposal["observedAt"],
+            "entityIds": [e.get("id") for e in checked["write"] if e.get("id")],
         }
 
     def decisions(self, _body):

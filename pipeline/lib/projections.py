@@ -3,7 +3,7 @@
 Both projections are pure functions of the object asof.ask_participant
 returns; neither reads anything else. The stored model stays the graph.
 
-  to_sdtm(answer)  SDTM-shaped domains: DM, DS, SV, BE, PC
+  to_sdtm(answer)  SDTM-shaped domains: DM, DS, SV, BE, PC, VS
   to_fhir(answer)  a FHIR R4 collection Bundle: Patient, ResearchStudy,
                    ResearchSubject, Consent, Encounter, Specimen,
                    Observation, and a Provenance per fact
@@ -63,7 +63,7 @@ def to_sdtm(a: dict) -> dict:
                DSDECOD="INFORMED CONSENT OBTAINED", DSCAT="PROTOCOL MILESTONE",
                DSSTDTC=_date(c["observedAt"]))
           for i, c in enumerate(a.get("consentHistory", []), 1)]
-    sv, be, pc = [], [], []
+    sv, be, pc, vs = [], [], [], []
     for v in a["visits"]:
         vnum = _num(v["visit"])
         sv.append(dict(base, DOMAIN="SV", USUBJID=usubjid, VISITNUM=vnum, VISIT=v["visit"],
@@ -86,9 +86,14 @@ def to_sdtm(a: dict) -> dict:
                                PCSTRESN=r.get("pne:result"), PCSTRESU=r.get("pne:units"),
                                PCSPEC="PLASMA", PCMETHOD=r.get("analysisMethod"),
                                VISITNUM=vnum, VISIT=v["visit"], PCDTC=_date(collected)))
+        for o in v.get("observations", []):
+            vs.append(dict(base, DOMAIN="VS", USUBJID=usubjid, VSSEQ=len(vs) + 1, VSTESTCD=o["parameter"],
+                           VSPOS=o.get("position"), VSORRES=str(o["value"]), VSORRESU=o.get("unit"),
+                           VSSTRESN=o["value"], VSSTRESU=o.get("unit"), VISITNUM=vnum, VISIT=v["visit"],
+                           VSDTC=_date((o.get("evidence") or {}).get("observedAt"))))
     for i, row in enumerate(be, 1):
         row["BESEQ"] = i
-    return {"usubjid": usubjid, "domains": {"DM": dm, "DS": ds, "SV": sv, "BE": be, "PC": pc}}
+    return {"usubjid": usubjid, "domains": {"DM": dm, "DS": ds, "SV": sv, "BE": be, "PC": pc, "VS": vs}}
 
 
 # ------------------------------------------------------------------ FHIR --

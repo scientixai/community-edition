@@ -10,7 +10,8 @@
     "SiteActivation": {"out": ["activates"]},
     "VisitOccurrence": {
       "in": [["ActivityOccurrence", "performedInVisit"], ["CustodyEvent", "performedInVisit"],
-             ["AssayResult", "performedInVisit"], ["Specimen", "performedInVisit"]]
+             ["AssayResult", "performedInVisit"], ["Specimen", "performedInVisit"],
+             ["ClinicalObservation", "atVisit"]]
     },
     "ActivityOccurrence": {"out": ["performedBy", "prov:used"]},
     "AssayResult": {"out": ["performedBy"]},

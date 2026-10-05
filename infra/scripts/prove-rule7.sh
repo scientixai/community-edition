@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Proves Engineering Floor Rule 7 (capability ≠ authority) for the adaptive service.
 # Shows: construct does not write, commit without env fails, commit with env succeeds.
+# Construct checks every proposal against the graph, so load the walkthrough's
+# study and enrollment first (steps 1 and 3), or the stub's links will not resolve.
 
 set -euo pipefail
 cd "$(dirname "$0")/../.."
@@ -114,6 +116,13 @@ ALLOW_RESPONSE=$(curl -sf -X POST "$ADAPTIVE_URL/construct" \
   -d '{
     "statement": "Participant P2202 completed the Week 4 visit at the Houston site on May 15th, 2026. Seated systolic blood pressure was 118 mmHg."
   }')
+ALLOW_BLOCKED=$(echo "$ALLOW_RESPONSE" | python3 -c "import json,sys; print(json.load(sys.stdin).get('blocked', False))")
+if [ "$ALLOW_BLOCKED" = "True" ]; then
+  echo "✗ The proposal does not check out against the graph:"
+  echo "$ALLOW_RESPONSE" | python3 -c "import json,sys; [print('   - ' + r) for r in json.load(sys.stdin)['reasons']]"
+  echo "   Load the study and enrollment first (walkthrough steps 1 and 3), then re-run."
+  exit 1
+fi
 ALLOW_PROPOSAL_ID=$(echo "$ALLOW_RESPONSE" | python3 -c "import json,sys; print(json.load(sys.stdin)['proposalId'])")
 ALLOW_ENTITIES=$(echo "$ALLOW_RESPONSE" | python3 -c "import json,sys; print(json.dumps(json.load(sys.stdin)['entities']))")
 

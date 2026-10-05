@@ -62,6 +62,9 @@ questions they left open.
    deterministic stub parser otherwise, so the full loop demos with no
    key on conference wifi. The stub only understands the demo statement
    shapes, and says so in its error message. [Decided]
+   Update (0.1.3): with a key, the model looks the graph up before it
+   proposes and the service checks every entity and link; the default
+   model is `claude-opus-5-5`.
 
 5. **Broker: published image for v1.** `broker/build/` documents the
    from-source recipe (Tier B) but nothing depends on it. [Decided;

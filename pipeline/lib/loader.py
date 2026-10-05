@@ -43,6 +43,25 @@ def in_history(eid: str) -> bool:
     return status == 200
 
 
+ADAPTIVE_SOURCE = "Adaptive layer"
+ADAPTIVE_TYPES = ("VisitOccurrence", "ClinicalObservation", "Participant", "AdverseEvent")
+
+
+def clear_adaptive() -> int:
+    """Delete what the adaptive layer committed, so a reload is a clean slate."""
+    n = 0
+    for type_ in ADAPTIVE_TYPES:
+        try:
+            found = pnehttp.broker_get_entities(type_, f'sourceSystem=="{ADAPTIVE_SOURCE}"')
+        except RuntimeError:
+            continue
+        for e in found:
+            pnehttp.request("DELETE", f"{NGSI}/entities/{enc(e['id'])}")
+            pnehttp.request("DELETE", f"{NGSI}/temporal/entities/{enc(e['id'])}")
+            n += 1
+    return n
+
+
 def load(src: pathlib.Path, say=print) -> dict:
     """Load every connector's events; returns counts per source system."""
     events = connectors.read_sources(src)
@@ -52,6 +71,9 @@ def load(src: pathlib.Path, say=print) -> dict:
     for eid in ids:  # replace any earlier load: current state and history
         pnehttp.request("DELETE", f"{NGSI}/entities/{enc(eid)}")
         pnehttp.request("DELETE", f"{NGSI}/temporal/entities/{enc(eid)}")
+    removed = clear_adaptive()
+    if removed:
+        say(f"Removed {removed} entities an earlier walkthrough committed through the adaptive layer")
 
     # Time series (logger readings) are written straight into history first;
     # the facts loaded below then merge into the same history record.

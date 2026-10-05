@@ -3,7 +3,7 @@
 # HTTPS): builds offline, runs keyless in stub mode.
 FROM python:3.12-slim
 WORKDIR /app
-COPY pipeline/lib/pnehttp.py /app/lib/
+COPY pipeline/lib/pnehttp.py pipeline/lib/asof.py pipeline/lib/ask_nl.py pipeline/lib/projections.py pipeline/lib/propose.py pipeline/lib/model_index.json /app/lib/
 COPY adaptive/server.py /app/
 COPY adaptive/allowed.json /app/
 ENV PYTHONPATH=/app/lib

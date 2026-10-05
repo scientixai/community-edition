@@ -538,11 +538,57 @@ paths:
                 properties:
                   mode: { type: string }
                   proposalId: { type: string }
-                  entities:
+                  statement: { type: string }
+                  notes:
+                    type: string
+                    nullable: true
+                    description: The model's account of what it resolved and what it created
+                  observedAt:
+                    type: string
+                    description: When the proposed facts became true; stamped on every attribute at commit
+                  resolution:
                     type: array
+                    description: Each proposed entity classified against the graph (existing, new, duplicate, rejected)
                     items:
                       type: object
                       additionalProperties: true
+                  links:
+                    type: array
+                    description: Each relationship and whether its target exists, is new in this proposal, or is unresolved
+                    items:
+                      type: object
+                      additionalProperties: true
+                  blocked:
+                    type: boolean
+                    description: True when any check failed; commit will be refused
+                  reasons:
+                    type: array
+                    items: { type: string }
+                  executeEnabled: { type: boolean }
+                  entities:
+                    type: array
+                    description: The new entities commit would write (existing entities are referenced, never rewritten)
+                    items:
+                      type: object
+                      additionalProperties: true
+                  proposed:
+                    type: array
+                    description: Everything the model proposed, before the check
+                    items:
+                      type: object
+                      additionalProperties: true
+                  calls:
+                    type: array
+                    description: Graph lookups the model made before proposing
+                    items:
+                      type: object
+                      additionalProperties: true
+        "502":
+          description: The model call failed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
         "400":
           description: Missing statement or unsupported parameters
           content:
@@ -560,21 +606,21 @@ paths:
     post:
       tags: [adaptive]
       operationId: adaptiveCommit
-      summary: Execute a proposal when the adaptive execute gate is enabled
+      summary: Execute a stored proposal when the adaptive execute gate is enabled
+      description: >
+        Writes the entities the service stored with the proposal (not entities
+        sent by the client), after re-checking them against the graph. Every
+        attribute is stamped with the proposal's observedAt and sourceSystem
+        "Adaptive layer".
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [proposalId, entities, authority]
+              required: [proposalId, authority]
               properties:
                 proposalId: { type: string }
-                entities:
-                  type: array
-                  items:
-                    type: object
-                    additionalProperties: true
                 authority:
                   type: object
                   description: Explicit decision fields (for example source, approver, reason)
@@ -590,17 +636,31 @@ paths:
                   proposalId: { type: string }
                   executed: { type: boolean }
                   recorded: { type: boolean }
+                  observedAt: { type: string }
                   entityIds:
                     type: array
                     items: { type: string }
         "400":
-          description: Missing proposal, entities, or authority
+          description: Missing proposal or authority
           content:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
         "403":
           description: Execute gate is off; decision recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        "404":
+          description: Unknown proposal
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "409":
+          description: The proposal no longer checks out against the graph; decision recorded
           content:
             application/json:
               schema:

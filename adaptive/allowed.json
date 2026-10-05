@@ -20,6 +20,7 @@
       "forParticipant",
       "atStudySite",
       "perVisitDefinition",
+      "visitName",
       "visitType",
       "visitMode",
       "visitStatus",
@@ -33,6 +34,7 @@
       "observationForSubject",
       "parameterCode",
       "numericValue",
+      "position",
       "unit",
       "interpretation"
     ],

@@ -172,42 +172,55 @@ authority): it can construct entities but not unilaterally write them.
 
 ```sh
 curl -X POST http://localhost:8106/construct -H 'Content-Type: application/json' -d '{
-  "statement": "Participant P2201 completed the Week 8 visit at the Houston site on June 1st, 2026. Seated systolic blood pressure was 121 mmHg."
+  "statement": "Participant 204 completed Visit 5 at Site 123 on October 5th, 2026. Seated blood pressure was 118/70."
 }'
 ```
 
-The service returns a proposal id and the constructed entities. It does
-**not** write to the broker. Without `ANTHROPIC_API_KEY` the
-deterministic stub parses statements of that shape. With a key, the
-service makes one Messages API call and handles free-form statements.
+The service returns a proposal id, the constructed entities and a
+resolution report. It does **not** write to the broker. With
+`ANTHROPIC_API_KEY`, Claude first looks up the participant, the site and
+their visits in the graph, so the new visit links to the Participant 204
+the connectors loaded (`urn:ngsi-ld:Participant:cvrm-118-123-204`)
+instead of inventing one. The service then checks the proposal: each
+entity is `existing` or `new`, existing entities are referenced and never
+rewritten, and a link to anything not in the graph (or a second
+Participant 204) blocks the proposal. Without a key, the deterministic
+stub parses one statement shape about the walkthrough's CARDIO-118
+study ("Participant P2201 completed the Week 8 visit at the Houston
+site on June 1st, 2026. Seated systolic blood pressure was 121 mmHg."),
+and its links resolve once steps 1 and 3 have loaded that study.
 
-**Execute**: commit the proposal with explicit authority:
+**Execute**: commit the proposal with explicit authority. The service
+writes what it stored and checked, not what the client sends:
 
 ```sh
-# Save the proposal id and entities from the /construct response
 PROPOSAL_ID="<proposalId-from-above>"
-ENTITIES='[...]'  # entities array from /construct response
 
 # Attempt commit without the execute flag (will be denied and recorded)
 curl -X POST http://localhost:8106/commit -H 'Content-Type: application/json' -d '{
   "proposalId": "'$PROPOSAL_ID'",
-  "entities": '$ENTITIES',
   "authority": {"source": "demo", "approver": "user", "reason": "test"}
 }'
 # Returns 403: execution denied
 
-# Enable execution and commit
+# Enable execution and commit (proposals survive the restart)
 docker compose stop adaptive
 PNE_ADAPTIVE_EXECUTE=true docker compose up -d adaptive
 
 curl -X POST http://localhost:8106/commit -H 'Content-Type: application/json' -d '{
   "proposalId": "'$PROPOSAL_ID'",
-  "entities": '$ENTITIES',
   "authority": {"source": "demo", "approver": "user", "reason": "approved-test"}
 }'
 ```
 
-The statement becomes a VisitOccurrence and a ClinicalObservation,
+Commit re-checks the proposal against the graph and stamps every
+attribute with `observedAt` (when the facts became true) and
+`sourceSystem` "Adaptive layer", as the connectors do. Ask step 7 "show
+me 204" and Visit 5 appears with its readings, and the SDTM view gains a
+VS domain. Reloading the sources (`infra/scripts/load-sources.py`)
+removes what the adaptive layer committed.
+
+For the CARDIO-118 stub statement, the statement becomes a VisitOccurrence and a ClinicalObservation,
 written through the broker, which fires the subscription, which reruns
 the transform. Check `http://localhost:8103/events` and re-run the lake
 query: week 8 appears.
