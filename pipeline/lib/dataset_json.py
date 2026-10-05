@@ -12,7 +12,7 @@ import datetime
 import json
 import pathlib
 
-SOURCE_SYSTEM = {"name": "pne-community-edition", "version": "0.1.0"}
+SOURCE_SYSTEM = {"name": "pne-community-edition", "version": "0.1.1"}
 
 
 def _column(name: str, label: str, data_type: str, item_group: str) -> dict:

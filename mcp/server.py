@@ -4,7 +4,7 @@ import json, os, sys, urllib.error, urllib.parse, urllib.request
 
 PROTOCOL_VERSION = "2024-11-05"
 BROKER = os.environ.get("BROKER", "http://127.0.0.1:19091").rstrip("/")
-SERVER_INFO = {"name": "pne-ce-broker", "version": "0.1.0"}
+SERVER_INFO = {"name": "pne-ce-broker", "version": "0.1.1"}
 ACCEPT_LD = "application/ld+json"
 
 TOOLS = [

@@ -15,7 +15,7 @@ const { execFileSync, spawnSync } = require("node:child_process");
 const fs = require("node:fs");
 const path = require("node:path");
 
-const VERSION = process.env.PNE_VERSION || "0.1.0";
+const VERSION = process.env.PNE_VERSION || "0.1.1";
 const REPO = process.env.PNE_REPO || "scientixai/community-edition";
 const DIR = path.resolve(process.env.PNE_DIR || "./pne-community-edition");
 

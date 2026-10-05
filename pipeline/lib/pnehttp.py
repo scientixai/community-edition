@@ -17,8 +17,10 @@ import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 BROKER_URL = os.environ.get("PNE_BROKER_URL", "http://localhost:9090")
+# The broker dereferences this URL from inside the compose network, so the
+# default names the web service, not localhost, even for host-side callers.
 CONTEXT_URL = os.environ.get(
-    "PNE_CONTEXT_URL", "http://localhost:8080/context/pne-context.jsonld"
+    "PNE_CONTEXT_URL", "http://web:8080/context/pne-context.jsonld"
 )
 
 LINK_HEADER = (

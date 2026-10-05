@@ -58,7 +58,7 @@ services:
   # it from here), and a same-origin proxy to every service so the browser
   # needs no CORS setup.
   web:
-    image: ghcr.io/scientixai/pne-ce-web:${PNE_VERSION:-0.1.0}
+    image: ghcr.io/scientixai/pne-ce-web:${PNE_VERSION:-0.1.1}
     build:
       context: .
       dockerfile: web/Dockerfile
@@ -83,7 +83,7 @@ services:
   # USDM study definition authoring / ingest: accepts a USDM-style study
   # definition and loads it into the broker as NGSI-LD entities.
   usdm:
-    image: ghcr.io/scientixai/pne-ce-usdm:${PNE_VERSION:-0.1.0}
+    image: ghcr.io/scientixai/pne-ce-usdm:${PNE_VERSION:-0.1.1}
     build:
       context: ./pipeline
       dockerfile: usdm/Dockerfile
@@ -100,7 +100,7 @@ services:
   # broker and writes SDTM trial-design domains (TS, TA, TI, TV) to the
   # lake via the lake service write API.
   projection:
-    image: ghcr.io/scientixai/pne-ce-projection:${PNE_VERSION:-0.1.0}
+    image: ghcr.io/scientixai/pne-ce-projection:${PNE_VERSION:-0.1.1}
     build:
       context: ./pipeline
       dockerfile: projection/Dockerfile
@@ -119,7 +119,7 @@ services:
   # broker; the broker POSTs notifications here, and this listener triggers
   # the transform. No queue, no cloud.
   subscriptions:
-    image: ghcr.io/scientixai/pne-ce-subscriptions:${PNE_VERSION:-0.1.0}
+    image: ghcr.io/scientixai/pne-ce-subscriptions:${PNE_VERSION:-0.1.1}
     build:
       context: ./pipeline
       dockerfile: subscriptions/Dockerfile
@@ -139,7 +139,7 @@ services:
   # transformation producing SDTM datasets into the lake via the lake
   # service write API.
   transform:
-    image: ghcr.io/scientixai/pne-ce-transform:${PNE_VERSION:-0.1.0}
+    image: ghcr.io/scientixai/pne-ce-transform:${PNE_VERSION:-0.1.1}
     build:
       context: ./pipeline
       dockerfile: transform/Dockerfile
@@ -157,7 +157,7 @@ services:
   # Lake storage and query: owns all writes to the lake directory and
   # provides DuckDB SQL over the stored files.
   lake:
-    image: ghcr.io/scientixai/pne-ce-lake:${PNE_VERSION:-0.1.0}
+    image: ghcr.io/scientixai/pne-ce-lake:${PNE_VERSION:-0.1.1}
     build: ./lake
     environment:
       PNE_LAKE_DIR: /lake
@@ -171,7 +171,7 @@ services:
   # the Anthropic API when ANTHROPIC_API_KEY is set; falls back to a
   # deterministic offline stub otherwise.
   adaptive:
-    image: ghcr.io/scientixai/pne-ce-adaptive:${PNE_VERSION:-0.1.0}
+    image: ghcr.io/scientixai/pne-ce-adaptive:${PNE_VERSION:-0.1.1}
     build:
       context: .
       dockerfile: adaptive/Dockerfile
@@ -195,7 +195,7 @@ services:
   # any other rclone backend. Off by default so the core stack stays fully
   # offline; enable with:  docker compose --profile connectors up -d
   bridge:
-    image: ghcr.io/scientixai/pne-ce-bridge:${PNE_VERSION:-0.1.0}
+    image: ghcr.io/scientixai/pne-ce-bridge:${PNE_VERSION:-0.1.1}
     build: ./bridge
     profiles: ["connectors"]
     depends_on:
