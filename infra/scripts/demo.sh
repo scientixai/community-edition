@@ -58,7 +58,7 @@ echo "   Commit: execute the proposal (requires PNE_ADAPTIVE_EXECUTE=true)"
 echo "   Note: demo.sh shows propose path; for full commit see infra/scripts/prove-rule7.sh"
 
 step "   Decision log and Rule 7 enforcement"
-curl -sf http://localhost:8106/mode | python3 -c 'import json,sys; m=json.load(sys.stdin); print(f"  Mode: {m[\"mode\"]}, Execute enabled: {m[\"executeEnabled\"]}")'
+curl -sf http://localhost:8106/mode | python3 -c 'import json,sys; m=json.load(sys.stdin); print("  Mode: %s, Execute enabled: %s" % (m["mode"], m["executeEnabled"]))'
 
 step "Lake contents"
 curl -sf http://localhost:8105/files | json
