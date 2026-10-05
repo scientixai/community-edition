@@ -219,6 +219,32 @@ recorded:
 curl http://localhost:8106/decisions
 ```
 
+### Ask the question (2 minutes)
+
+*What did we know about Participant 204 when Protocol v3.0 was implemented
+at Site 123?* A second study, CVRM-118, comes as exports from nine source
+systems in their own formats (`examples/cvrm-118/sources`, described in
+`examples/cvrm-118/README.md`). Load them, then ask:
+
+```bash
+python3 infra/scripts/load-sources.py examples/cvrm-118/sources
+python3 infra/scripts/ask.py --site 123 --protocol 3.0
+python3 infra/scripts/ask.py --participant 204 --site 123 --protocol 3.0
+python3 infra/scripts/ask.py --participant 207 --site 123 --protocol 3.0
+```
+
+The browser version is step 7 of the walkthrough, `http://localhost:8080/asof.html`:
+ask in plain language ("show me 204", "show me 207", "compare 204 and 201").
+With `ANTHROPIC_API_KEY` set, Claude answers using only the engine's tools
+(model `PNE_ASK_MODEL`, default `claude-opus-5-5`); without it, an offline parser
+handles the same question shapes. Every stop opens to the JSON behind it and the
+broker records it cites, and every answer projects to SDTM-shaped domains
+(`--sdtm`) or a FHIR R4 Bundle (`--fhir`).
+The engine (`pipeline/lib/asof.py`) checks every step of every visit against
+the protocol, consent, delegation, training, certification, calibration, and
+cold chain in effect when it happened, and cites each fact's source system and
+`observedAt`. Edit a source row and reload, and the answer changes.
+
 ## 4. Reset
 
 ```sh

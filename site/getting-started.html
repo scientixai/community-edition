@@ -75,7 +75,16 @@ cd community-edition &amp;&amp; docker compose up -d</code></pre>
 <p>Open <code>http://localhost:8080/setup.html</code>: the wizard checks service health, seeds the demo study (or starts empty), shows whether the AI layer has a key, and configures optional storage connectors.</p>
 
 <h2 id="walkthrough">Walk the scenario</h2>
-<p>Then <code>http://localhost:8080</code> walks six steps: author the CARDIO-118 study, project it to Dataset-JSON, enroll participants, watch the subscription fire the sdtm.oak transform, query the lake with SQL, and end with a natural-language statement flowing through the same pipeline. The terminal twin is <code>./infra/scripts/demo.sh</code>, and every step is plain curl if you want to see the requests.</p>
+<p>Then <code>http://localhost:8080</code> walks the CARDIO-118 study in six steps: author it, project it to Dataset-JSON, enroll participants, watch the subscription fire the sdtm.oak transform, query the lake with SQL, and send a natural-language statement through the same pipeline. Step 7 asks the question below. The terminal twin is <code>./infra/scripts/demo.sh</code>, and every step is plain curl if you want to see the requests.</p>
+
+<h2 id="ask">Ask the question</h2>
+<p><em>What did we know about Participant 204 when Protocol v3.0 was implemented at Site 123?</em> Step 7 of the walkthrough, <code>http://localhost:8080/asof.html</code>, answers it for a second study, CVRM-118, exported from nine source systems in their own formats: protocol authoring, CTMS, eTMF delegation log, LMS, CMMS, eConsent, EDC, courier, and LIMS. Each names participants its own way; connectors resolve them to one IRI and stamp every fact with the time it became true and the system that said so.</p>
+<p>The engine finds when the site implemented the protocol, walks the graph out from the participant, and checks every step of every visit (collection, processing, packaging, cold-chain transit, lab receipt, assay, review) against the protocol, consent, delegation, training, certification, and calibration in effect at that moment, through the NGSI-LD temporal API. The answer is one object, every fact cited. Nothing in the code names a participant or an outcome: edit a source row, reload, and the answer changes.</p>
+<pre><code>python3 infra/scripts/load-sources.py examples/cvrm-118/sources
+python3 infra/scripts/ask.py --site 123 --protocol 3.0
+python3 infra/scripts/ask.py --participant 204 --site 123 --protocol 3.0</code></pre>
+<p>Ask in plain language: "show me 204", "show me 207", "compare 204 and 201". With <code>ANTHROPIC_API_KEY</code> set in <code>.env</code>, Claude answers using only the engine's tools; without it, an offline parser handles the same question shapes, and the page says which one answered. Every stop opens to the JSON the engine computed and the broker records behind it, and every answer projects to SDTM-shaped domains or a FHIR R4 Bundle with Provenance per fact: standards are views of the graph. Participant, subject, and patient mean the same thing.</p>
+<p>The same questions are tools in the bundled MCP server (<code>mcp/server.py</code>), so an MCP client such as Claude Desktop can ask them in plain language and cite the evidence.</p>
 <div class="note"><p>The full hand-typed version of the walkthrough, request by request, lives in the repository: <a href="https://github.com/scientixai/community-edition/blob/main/docs/getting-started.md">docs/getting-started.md</a>.</p></div>
 
 <h2 id="query">Query anything</h2>
@@ -95,7 +104,7 @@ cd community-edition &amp;&amp; docker compose up -d</code></pre>
 </ul>
 <nav class="doc-nav" aria-label="Pages"><a class="next" href="architecture.html"><small>Next</small>Architecture</a></nav>
 </article>
-<aside class="toc" aria-label="On this page"><b>On this page</b><ol><li><a href="#prerequisites">Prerequisites</a></li><li><a href="#install">Install</a><ol style="margin: 0.25em 0;"><li><a href="#ports">Handling busy ports</a></li></ol></li><li><a href="#first-run">First run</a></li><li><a href="#walkthrough">Walk the scenario</a></li><li><a href="#query">Query anything</a></li><li><a href="#reset">Reset</a></li><li><a href="#troubleshooting">Troubleshooting</a></li></ol></aside>
+<aside class="toc" aria-label="On this page"><b>On this page</b><ol><li><a href="#prerequisites">Prerequisites</a></li><li><a href="#install">Install</a><ol style="margin: 0.25em 0;"><li><a href="#ports">Handling busy ports</a></li></ol></li><li><a href="#first-run">First run</a></li><li><a href="#walkthrough">Walk the scenario</a></li><li><a href="#ask">Ask the question</a></li><li><a href="#query">Query anything</a></li><li><a href="#reset">Reset</a></li><li><a href="#troubleshooting">Troubleshooting</a></li></ol></aside>
 </div></main>
 <footer class="site-footer"><div class="wrap">
   <div class="top">

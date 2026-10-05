@@ -16,7 +16,7 @@
 #   BROKER_HEALTH_URL  full URL override for broker health check
 set -eu
 
-PNE_VERSION="${PNE_VERSION:-0.1.1}"
+PNE_VERSION="${PNE_VERSION:-0.1.2}"
 PNE_REPO="${PNE_REPO:-scientixai/community-edition}"
 PNE_DIR="${PNE_DIR:-./pne-community-edition}"
 PNE_SOURCE="${PNE_SOURCE:-release}"

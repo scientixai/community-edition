@@ -6,8 +6,7 @@
 <title>Provenance Neural Engine - Community Edition</title>
 <style>
   /* Self-contained on purpose: no CDN, no webfonts, runs on conference
-     wifi. Palette is a clean-room take on the Scientix "Synthetic
-     Precision" scheme: dark surfaces, teal primary, copper secondary,
+     wifi. Palette: dark surfaces, teal primary, copper secondary,
      cream tertiary. */
   :root {
     --surface: #131313;
@@ -170,6 +169,14 @@ GROUP BY VISIT, VSTESTCD ORDER BY min(VISITNUM), VSTESTCD</textarea>
     <textarea id="statement" rows="3">Participant P2201 completed the Week 8 visit at the Houston site on June 1st, 2026. Seated systolic blood pressure was 121 mmHg.</textarea>
     <button onclick="construct(this)">Propose entity</button>
     <pre class="out" id="out-6"></pre>
+  </div>
+
+  <div class="step">
+    <h2><span class="num">7</span>Ask</h2>
+    <p>What did we know about Participant 204 when Protocol v3.0 was implemented at Site 123?
+       A second study, loaded from nine source systems. Ask in plain language; every answer opens
+       to the data that produced it.</p>
+    <button onclick="location.href='/asof.html'">Ask</button>
   </div>
 
 </div>

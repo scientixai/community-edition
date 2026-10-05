@@ -1,0 +1,8 @@
+site,staff_name,delegated_tasks,start_date,end_date,pi_initials
+Site 123,J. Moreno,specimen collection; specimen processing,2026-01-22,,LH
+Site 123,P. Singh,specimen collection; specimen processing,2026-01-22,,LH
+Site 123,T. Okafor,informed consent; specimen packaging,2026-01-22,,LH
+Site 087,D. Brandt,specimen collection; specimen processing,2026-01-21,,MW
+Site 087,E. Laurent,informed consent; specimen packaging,2026-01-21,,MW
+Site 045,K. Osei,specimen collection; specimen processing,2026-02-03,,SR
+Site 045,N. Petrov,informed consent; specimen packaging,2026-02-03,,SR

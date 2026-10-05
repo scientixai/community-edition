@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Ask - Community Edition</title>
+<style>
+  /* Self-contained on purpose: no CDN, no webfonts, runs on conference
+     wifi. Palette: dark surfaces, teal primary, copper secondary,
+     cream tertiary. */
+  :root {
+    --surface: #131313;
+    --surface-low: #1c1b1b;
+    --surface-high: #2a2a2a;
+    --on-surface: #e5e2e1;
+    --muted: #b9cacb;
+    --outline: #3a494b;
+    --teal: #00dbe7;
+    --teal-dim: #006a71;
+    --copper: #ffb77b;
+    --cream: #f9f9e0;
+    --error: #ffb4ab;
+    --ok: #9be8a5;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--surface);
+    color: var(--on-surface);
+    font: 15px/1.55 "Be Vietnam Pro", "Segoe UI", system-ui, -apple-system, sans-serif;
+  }
+  header {
+    padding: 2.2rem 1.5rem 1.4rem;
+    border-bottom: 1px solid var(--outline);
+    background: linear-gradient(180deg, #0e0e0e, var(--surface));
+  }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  h1 { margin: 0 0 .3rem; font-size: 1.5rem; font-weight: 600; letter-spacing: .01em; }
+  h1 .edition { color: var(--teal); }
+  header p { margin: .2rem 0 0; color: var(--muted); max-width: 62ch; }
+  .status-row { margin-top: 1rem; display: flex; gap: .6rem; flex-wrap: wrap; }
+  .pill {
+    font-size: .78rem; padding: .18rem .7rem; border-radius: 999px;
+    border: 1px solid var(--outline); color: var(--muted);
+  }
+  .pill.up { border-color: var(--teal-dim); color: var(--teal); }
+  .pill.down { border-color: #5c2b29; color: var(--error); }
+  main { padding: 1.5rem; }
+  .step {
+    background: var(--surface-low);
+    border: 1px solid var(--outline);
+    border-radius: 10px;
+    margin-bottom: 1.1rem;
+    padding: 1.1rem 1.25rem;
+  }
+  .step h2 {
+    margin: 0 0 .35rem; font-size: 1.02rem; font-weight: 600;
+  }
+  .step h2 .num {
+    display: inline-block; width: 1.6rem; height: 1.6rem; line-height: 1.6rem;
+    text-align: center; margin-right: .55rem; border-radius: 50%;
+    background: var(--teal-dim); color: var(--cream); font-size: .85rem;
+  }
+  .step p { margin: .25rem 0 .8rem; color: var(--muted); font-size: .92rem; }
+  button {
+    background: transparent; color: var(--teal);
+    border: 1px solid var(--teal-dim); border-radius: 7px;
+    padding: .45rem 1rem; font: inherit; font-size: .9rem; cursor: pointer;
+    margin: 0 .5rem .5rem 0; transition: background .15s;
+  }
+  button:hover { background: rgba(0, 219, 231, .08); }
+  button.copper { color: var(--copper); border-color: #7a4100; }
+  button.copper:hover { background: rgba(255, 183, 123, .08); }
+  textarea, input[type=text] {
+    width: 100%; background: #0e0e0e; color: var(--on-surface);
+    border: 1px solid var(--outline); border-radius: 7px;
+    padding: .55rem .7rem; font: .86rem/1.5 ui-monospace, Menlo, Consolas, monospace;
+    margin-bottom: .5rem; resize: vertical;
+  }
+  pre.out {
+    background: #0e0e0e; border: 1px solid var(--outline); border-radius: 7px;
+    padding: .7rem .9rem; overflow: auto; max-height: 340px;
+    font: .8rem/1.5 ui-monospace, Menlo, Consolas, monospace;
+    color: var(--cream); white-space: pre-wrap; word-break: break-word;
+  }
+  pre.out:empty { display: none; }
+  pre.out.err { color: var(--error); }
+  table { border-collapse: collapse; font-size: .84rem; margin: .4rem 0; width: 100%; }
+  th, td { border: 1px solid var(--outline); padding: .3rem .6rem; text-align: left; }
+  th { color: var(--teal); font-weight: 600; background: var(--surface-high); }
+  footer { padding: 1.5rem; color: var(--muted); font-size: .82rem; border-top: 1px solid var(--outline); }
+  footer a { color: var(--teal); }
+  .spin { opacity: .55; pointer-events: none; }
+
+  .ask { display: flex; gap: .5rem; flex-wrap: wrap; align-items: center; margin-bottom: .5rem; }
+  .ask label { color: var(--muted); font-size: .85rem; }
+  .ask input[type=text] { width: 6.5rem; margin: 0; }
+  .muted { color: var(--muted); }
+  .ev { color: var(--muted); font-size: .76rem; white-space: nowrap; }
+  .ok { color: #4fd1a5; font-weight: 600; }
+  .xx { color: var(--copper); font-weight: 600; }
+  .status-box { margin: .9rem 0 .4rem; padding: .7rem .9rem; border-radius: 8px; font-weight: 600;
+             border: 1px solid var(--outline); background: var(--surface-high); }
+  .status-box.bad { border-color: var(--copper); color: var(--copper); }
+  .status-box.good { border-color: #2f8f72; color: #4fd1a5; }
+  .snapshot { margin: .4rem 0 .8rem; font-size: .88rem; }
+  .snapshot div { margin: .15rem 0; }
+  .visit { margin-top: 1rem; }
+  .visit h3 { font-size: .95rem; margin: 0 0 .4rem; color: var(--cream); }
+  .visit.before { opacity: .62; }
+  ol.stops { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--outline); }
+  ol.stops > li { position: relative; padding: .1rem 0 .7rem 1.4rem; }
+  ol.stops > li::before { content: attr(data-n); position: absolute; left: -.85rem; top: .05rem;
+    width: 1.5rem; height: 1.5rem; line-height: 1.5rem; text-align: center; border-radius: 50%;
+    background: var(--teal-dim); color: var(--cream); font-size: .75rem; }
+  ol.stops > li.flagged::before { background: #7a4100; }
+  .stop-head { display: flex; justify-content: space-between; gap: .8rem; flex-wrap: wrap; font-size: .9rem; }
+  .stop-head b { font-weight: 600; }
+  ul.facts { list-style: none; margin: .2rem 0 0; padding: 0; font-size: .84rem; }
+  ul.facts li { display: flex; justify-content: space-between; gap: .8rem; padding: .1rem 0;
+                border-bottom: 1px dotted var(--outline); }
+  .chips span { display: inline-block; font-size: .75rem; padding: .1rem .55rem; margin: .15rem .3rem 0 0;
+                border: 1px solid var(--outline); border-radius: 999px; color: var(--muted); }
+  details summary { cursor: pointer; color: var(--teal); font-size: .88rem; margin-top: .6rem; }
+  a.back { color: var(--teal); }
+
+  .bar { display: flex; gap: .6rem; flex-wrap: wrap; align-items: center; font-size: .85rem; color: var(--muted); }
+  .badge { border: 1px solid var(--outline); border-radius: 999px; padding: .15rem .7rem; }
+  .badge.on { border-color: #2f8f72; color: #4fd1a5; }
+  .askbox { display: flex; gap: .5rem; margin: .6rem 0 .4rem; }
+  .askbox input { flex: 1; margin: 0; font-size: 1rem; padding: .7rem .9rem; }
+  .askbox button { margin: 0; }
+  .chips button { font-size: .8rem; padding: .25rem .7rem; margin: .2rem .3rem .2rem 0; color: var(--muted); border-color: var(--outline); }
+  .turn { margin-top: 1.4rem; }
+  .q { color: var(--cream); font-weight: 600; margin-bottom: .4rem; }
+  .q::before { content: "Q  "; color: var(--teal); }
+  .a { background: var(--surface-high); border: 1px solid var(--outline); border-radius: 8px; padding: .8rem 1rem; font-size: .92rem; line-height: 1.55; }
+  .a p { margin: .35rem 0; }
+  .a ul, .a ol { margin: .3rem 0 .5rem 1.3rem; padding: 0; }
+  .a li { margin: .15rem 0; }
+  .a h4 { margin: .8rem 0 .3rem; font-size: .95rem; color: var(--cream); }
+  .a code { font: .82rem ui-monospace, Menlo, Consolas, monospace; background: #0e0e0e; padding: .05rem .3rem; border-radius: 4px; }
+  .a strong { color: var(--cream); }
+  .who { font-size: .75rem; color: var(--muted); margin: .3rem 0 .6rem; }
+  .ev { color: var(--muted); font-size: .76rem; white-space: nowrap; }
+  .ok { color: #4fd1a5; font-weight: 600; }
+  .xx { color: var(--copper); font-weight: 600; }
+  .muted { color: var(--muted); }
+  .status-box { margin: .8rem 0 .4rem; padding: .6rem .9rem; border-radius: 8px; font-weight: 600; border: 1px solid var(--outline); }
+  .status-box.bad { border-color: var(--copper); color: var(--copper); }
+  .status-box.good { border-color: #2f8f72; color: #4fd1a5; }
+  .snapshot { margin: .4rem 0 .6rem; font-size: .88rem; }
+  .snapshot div { margin: .15rem 0; }
+  .visit { margin-top: .9rem; }
+  .visit h3 { font-size: .92rem; margin: 0 0 .4rem; color: var(--cream); }
+  .visit.before { opacity: .62; }
+  ol.stops { list-style: none; margin: 0; padding: 0; border-left: 2px solid var(--outline); }
+  ol.stops > li { position: relative; padding: .1rem 0 .7rem 1.4rem; }
+  ol.stops > li::before { content: attr(data-n); position: absolute; left: -.85rem; top: .05rem; width: 1.5rem; height: 1.5rem;
+    line-height: 1.5rem; text-align: center; border-radius: 50%; background: var(--teal-dim); color: var(--cream); font-size: .75rem; }
+  ol.stops > li.flagged::before { background: #7a4100; }
+  .stop-head { display: flex; justify-content: space-between; gap: .8rem; flex-wrap: wrap; font-size: .9rem; }
+  .stop-head b { font-weight: 600; }
+  ul.facts { list-style: none; margin: .2rem 0 0; padding: 0; font-size: .84rem; }
+  ul.facts li { display: flex; justify-content: space-between; gap: .8rem; padding: .1rem 0; border-bottom: 1px dotted var(--outline); }
+  a.data { color: var(--teal); font-size: .74rem; cursor: pointer; margin-left: .5rem; text-decoration: underline dotted; }
+  .datapane { margin: .4rem 0 .2rem; }
+  .datapane .lbl { font-size: .74rem; color: var(--muted); margin: .4rem 0 .15rem; }
+  details summary { cursor: pointer; color: var(--teal); font-size: .85rem; margin-top: .6rem; }
+  pre.out { max-height: 420px; }
+  .tabs { display: flex; gap: .3rem; margin: .7rem 0 .2rem; border-bottom: 1px solid var(--outline); }
+  .tabs button { margin: 0; border-radius: 6px 6px 0 0; border-bottom: none; font-size: .82rem; padding: .3rem .8rem; color: var(--muted); border-color: var(--outline); }
+  .tabs button.on { color: var(--teal); border-color: var(--teal-dim); background: rgba(0, 219, 231, .06); }
+  .domain { margin: .7rem 0; }
+  .domain h4 { margin: 0 0 .2rem; color: var(--teal); font-size: .88rem; }
+  .domain table { font-size: .76rem; }
+  .domain td { white-space: nowrap; }
+  .scroll { overflow-x: auto; }
+  .node { margin: .5rem 0; border: 1px solid var(--outline); border-radius: 7px; transition: box-shadow .3s; }
+  .node.hit { box-shadow: 0 0 0 2px var(--teal); }
+  .node .nh { font-size: .78rem; padding: .3rem .6rem; color: var(--teal); border-bottom: 1px solid var(--outline); }
+  .node pre.out { margin: 0; border: none; max-height: 300px; }
+  pre.out a.iri { color: var(--teal); text-decoration: underline dotted; cursor: pointer; }
+  table.terms td { font-size: .76rem; }
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Ask <span class="edition">Community Edition</span></h1>
+    <p>CVRM-118, exported from nine source systems in their own formats and loaded into the broker with the time every
+       fact became true. Ask in plain language. The answer is computed from the broker at the moment you ask, and every
+       part of it opens to the data that produced it. <a style="color:var(--teal)" href="/">Back to the pipeline walkthrough</a>.</p>
+    <div class="bar">
+      <span class="badge" id="mode">checking...</span>
+      <span class="badge" id="data">data: not loaded</span>
+      <button onclick="loadSources(this)" style="margin:0">Load the nine source systems</button>
+    </div>
+  </div>
+</header>
+<main>
+<div class="wrap">
+  <div class="askbox">
+    <input type="text" id="question" placeholder="What did we know about Participant 204 when Protocol v3.0 was implemented at Site 123?"
+           onkeydown="if (event.key === 'Enter') ask()">
+    <button id="send" onclick="ask()">Ask</button>
+  </div>
+  <div class="chips" id="chips"></div>
+  <div id="thread"></div>
+  <p class="muted" style="margin-top:2rem;font-size:.82rem">Participant, subject, and patient mean the same here. One clock: when each
+     fact was true. NGSI-LD has no second clock yet for what we knew and when we knew it. The same questions run in the terminal
+     (<code>infra/scripts/ask.py</code>) and in any MCP client (<code>mcp/server.py</code>). The source files are in
+     <code>examples/cvrm-118/sources</code>: edit a row, reload, ask again.</p>
+</div>
+</main>
+<footer>
+  <div class="wrap">
+    Apache-2.0 · vocabulary from
+    <a href="https://github.com/scientixai/the-ontology-project">The Ontology Project</a>
+    · transform engine <a href="https://github.com/pharmaverse/sdtm.oak">sdtm.oak</a>
+    · broker <a href="https://github.com/ScorpioBroker/ScorpioBroker">NEC Scorpio</a> (in-memory profile)
+    · architecture inspired by the AWS Garnet Framework, built without it: no SQS, no S3, no Athena, no cloud.
+  </div>
+</footer>
+<script>
+const EXAMPLES = [
+  'What did we know about Participant 204 when Protocol v3.0 was implemented at Site 123?',
+  'Show me 207',
+  'Show me 201',
+  'Compare 204 and 201',
+  'Which participants came in at Site 123 after v3.0?',
+  'What about Site 087?',
+  'Show me 204 as SDTM',
+  'Show me 207 as FHIR',
+  'Show me 204 as JSON-LD',
+];
+const history = [];
+let context = {};
+const stash = {};
+let seq = 0;
+
+async function jfetch(url, opts) {
+  const resp = await fetch(url, opts);
+  const text = await resp.text();
+  let body;
+  try { body = JSON.parse(text); } catch { body = text; }
+  if (!resp.ok) throw new Error(url + ' -> ' + resp.status + '\n' + (typeof body === 'string' ? body : JSON.stringify(body, null, 2)));
+  return body;
+}
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]));
+const when = (s) => s ? esc(String(s).replace('T', ' ').slice(0, 16)) : '';
+const pretty = (o) => `<pre class="out">${esc(JSON.stringify(o, null, 2))}</pre>`;
+// Small Markdown subset for model answers: escape first, then format, so
+// nothing in an answer can inject HTML.
+function md(text) {
+  const inline = (t) => esc(t)
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/(^|[^*])\*([^*\s][^*]*)\*/g, '$1<em>$2</em>');
+  const out = [];
+  let list = null;
+  const close = () => { if (list) { out.push(`</${list}>`); list = null; } };
+  for (const raw of String(text || '').split('\n')) {
+    const line = raw.trimEnd();
+    let m;
+    if (!line.trim()) { close(); continue; }
+    if ((m = line.match(/^\s*#{1,6}\s+(.*)$/))) { close(); out.push(`<h4>${inline(m[1])}</h4>`); continue; }
+    if ((m = line.match(/^\s*[-*•]\s+(.*)$/))) { if (list !== 'ul') { close(); out.push('<ul>'); list = 'ul'; } out.push(`<li>${inline(m[1])}</li>`); continue; }
+    if ((m = line.match(/^\s*\d+[.)]\s+(.*)$/))) { if (list !== 'ol') { close(); out.push('<ol>'); list = 'ol'; } out.push(`<li>${inline(m[1])}</li>`); continue; }
+    if (list && /^\s{2,}\S/.test(raw)) { out[out.length - 1] = out[out.length - 1].replace(/<\/li>$/, ' ' + inline(line.trim()) + '</li>'); continue; }
+    close();
+    out.push(`<p>${inline(line)}</p>`);
+  }
+  close();
+  return out.join('');
+}
+function keep(obj) { const k = 'd' + (++seq); stash[k] = obj; return k; }
+function ev(e) {
+  if (!e) return '';
+  return `<span class="ev" title="${esc(e.entity)}${e.attribute ? ' · ' + esc(e.attribute) : ''}">${esc(e.sourceSystem || '')}${e.observedAt ? ' · ' + when(e.observedAt) : ''}</span>`;
+}
+
+async function status() {
+  try {
+    const m = await jfetch('/asof/mode');
+    const el = document.getElementById('mode');
+    el.textContent = m.claude ? `answers by Claude (${m.model})` : 'no API key: offline parser answers';
+    el.className = 'badge' + (m.claude ? ' on' : '');
+    if (m.sites) {
+      const d = document.getElementById('data');
+      d.textContent = `data: ${m.participants} participants at ${m.sites} sites in the broker`;
+      d.className = 'badge on';
+    }
+  } catch (e) { document.getElementById('mode').textContent = 'mode unknown'; }
+}
+function loadSources(el) {
+  el.classList.add('spin');
+  const d = document.getElementById('data');
+  d.textContent = 'data: loading...';
+  jfetch('/asof/load', {method: 'POST'}).then((r) => {
+    const s = r.summary;
+    d.textContent = `data: ${s.things} records from ${Object.keys(s.events).length} systems, ${s.loggerReadings} logger readings`;
+    d.className = 'badge on';
+  }).catch((e) => { d.textContent = 'data: load failed'; alert(e.message); }).finally(() => el.classList.remove('spin'));
+}
+
+function toggle(id) {
+  const el = document.getElementById(id);
+  el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+async function brokerRecord(btn, entity, target) {
+  const box = document.getElementById(target);
+  box.style.display = 'block';
+  box.innerHTML = '<div class="lbl">loading broker history...</div>';
+  try {
+    const h = await jfetch('/asof/history?id=' + encodeURIComponent(entity));
+    box.innerHTML = `<div class="lbl">GET /ngsi-ld/v1/temporal/entities/${esc(entity)} (the broker's record, every value with observedAt)</div>` + pretty(h);
+  } catch (e) { box.innerHTML = `<pre class="out err">${esc(e.message)}</pre>`; }
+}
+
+function renderSdtm(out) {
+  if (out.error) return `<div class="status-box bad">${esc(out.error)}</div>`;
+  let h = `<div class="muted" style="font-size:.8rem">${esc(out.usubjid)}: SDTM-shaped domains projected from the answer above. No DV domain: the engine lists possible issues for a person to review and does not decide what is a deviation.</div>`;
+  for (const [name, rows] of Object.entries(out.domains)) {
+    h += `<div class="domain"><h4>${esc(name)} · ${rows.length} row${rows.length === 1 ? '' : 's'}</h4>`;
+    if (!rows.length) { h += '<div class="muted" style="font-size:.8rem">no records</div></div>'; continue; }
+    const cols = Object.keys(rows[0]);
+    h += '<div class="scroll"><table><tr>' + cols.map((c) => `<th>${esc(c)}</th>`).join('') + '</tr>';
+    for (const r of rows) h += '<tr>' + cols.map((c) => `<td>${esc(r[c])}</td>`).join('') + '</tr>';
+    h += '</table></div></div>';
+  }
+  return h;
+}
+function renderFhir(out) {
+  if (out.error) return `<div class="status-box bad">${esc(out.error)}</div>`;
+  const counts = {};
+  for (const e of out.entry) counts[e.resource.resourceType] = (counts[e.resource.resourceType] || 0) + 1;
+  return `<div class="muted" style="font-size:.8rem">${esc(out.identifier.value)}: a FHIR R4 collection Bundle projected from the answer above, with a Provenance resource per fact. ` +
+    Object.entries(counts).map(([t, n]) => `${esc(t)} ${n}`).join(' · ') + `</div>` + pretty(out);
+}
+function nodeId(iri, key) { return key + 'n' + btoa(unescape(encodeURIComponent(iri))).replace(/[^A-Za-z0-9]/g, ''); }
+function linkIris(json, key, known) {
+  return esc(json).replace(/&quot;(urn:ngsi-ld:[^&]+?)&quot;/g, (m, iri) =>
+    known.has(iri) ? `&quot;<a class="iri" onclick="jump('${nodeId(iri, key)}')">${iri}</a>&quot;` : m);
+}
+function jump(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.scrollIntoView({behavior: 'smooth', block: 'center'});
+  el.classList.add('hit'); setTimeout(() => el.classList.remove('hit'), 1600);
+}
+function renderJsonld(out) {
+  if (out.error) return `<div class="status-box bad">${esc(out.error)}</div>`;
+  const key = keep(out), graph = out.jsonld['@graph'];
+  const known = new Set(graph.map((n) => n.id));
+  let h = `<div class="muted" style="font-size:.8rem">The broker's own NGSI-LD records for everything this answer touched, as one JSON-LD graph: ${graph.length} nodes. Click any IRI to follow the link. Possible issues are <code>pne:PossibleIssue</code> nodes tied to their evidence by <code>prov:wasDerivedFrom</code>; the facts themselves are untouched.</div>`;
+  h += `<div class="node"><div class="nh">@context</div><pre class="out">${esc(JSON.stringify(out.jsonld['@context'], null, 2))}</pre></div>`;
+  h += `<details><summary>${Object.keys(out.termsUsed).length} terms used, each resolved to a full IRI through the @context</summary><table class="terms"><tr><th>Term</th><th>IRI</th></tr>` +
+       Object.entries(out.termsUsed).map(([t, iri]) => `<tr><td>${esc(t)}</td><td>${esc(iri)}</td></tr>`).join('') + '</table></details>';
+  for (const n of graph) {
+    h += `<div class="node" id="${nodeId(n.id, key)}"><div class="nh">${esc(n.type)} · ${esc(n.id)}</div><pre class="out">${linkIris(JSON.stringify(n, null, 2), key, known)}</pre></div>`;
+  }
+  return h;
+}
+function renderProjection(out) {
+  if (out.jsonld) return renderJsonld(out);
+  return out.domains ? renderSdtm(out) : out.resourceType === 'Bundle' ? renderFhir(out) : `<div class="status-box bad">${esc(out.error || 'no projection')}</div>`;
+}
+async function showTab(btn, key, which) {
+  const box = document.getElementById('tabs' + key);
+  box.querySelectorAll('.tabs button').forEach((b) => b.classList.toggle('on', b === btn));
+  for (const name of ['chain', 'jsonld', 'sdtm', 'fhir']) document.getElementById(key + name).style.display = name === which ? 'block' : 'none';
+  const pane = document.getElementById(key + which);
+  if ((which === 'sdtm' || which === 'fhir' || which === 'jsonld') && !pane.dataset.done) {
+    const a = stash[key];
+    pane.innerHTML = '<div class="muted">projecting...</div>';
+    try {
+      const out = await jfetch(`/asof/project?participant=${encodeURIComponent(a.participant.number)}&site=${encodeURIComponent(a.participant.site)}&protocol=${encodeURIComponent(a.protocol.version)}&format=${which}`);
+      pane.innerHTML = renderProjection(out);
+      pane.dataset.done = '1';
+    } catch (e) { pane.innerHTML = `<pre class="out err">${esc(e.message)}</pre>`; }
+  }
+}
+
+function renderParticipant(a) {
+  if (a.error) return `<div class="status-box bad">${esc(a.error)}</div>`;
+  const key = keep(a);
+  return `<div id="tabs${key}"><div class="tabs">
+      <button class="on" onclick="showTab(this, '${key}', 'chain')">Evidence chain</button>
+      <button onclick="showTab(this, '${key}', 'jsonld')">JSON-LD</button>
+      <button onclick="showTab(this, '${key}', 'sdtm')">SDTM</button>
+      <button onclick="showTab(this, '${key}', 'fhir')">FHIR</button></div>
+    <div id="${key}chain">${renderChain(a)}</div>
+    <div id="${key}jsonld" style="display:none"></div>
+    <div id="${key}sdtm" style="display:none"></div>
+    <div id="${key}fhir" style="display:none"></div></div>`;
+}
+
+function renderChain(a) {
+  const p = a.protocol, at = a.atImplementation;
+  let h = `<div class="snapshot"><b>${esc(a.question)}</b><div>Protocol ${esc(p.version)} implemented at ${esc(a.participant.site)}: <b>${esc(p.implementedAtSite)}</b> ${ev(p.evidence)}</div></div>`;
+  h += `<div class="snapshot"><b>On ${esc(p.implementedAtSite)}</b><div>Consent on file: ICF v${esc(at.consentOnFile.version)} ${ev(at.consentOnFile.evidence)}</div>`;
+  for (const m of at.siteTeam) {
+    h += `<div>${esc(m.person)} (${esc(m.role)}): ${m.readyForNewProtocol ? `<span class="ok">trained on ${esc(p.version)}</span>` : `<span class="xx">not trained on ${esc(p.version)}</span>`}</div>`;
+  }
+  h += `</div><div class="status-box ${a.possibleIssues.length ? 'bad' : 'good'}">${esc(a.summary)}</div>`;
+  for (const vis of a.visits.slice().reverse()) {
+    h += `<div class="visit ${vis.afterImplementation ? '' : 'before'}"><h3>Blood draw · Participant ${esc(a.participant.number)} · ${esc(vis.visit)} · ${when(vis.start)} · protocol ${esc(vis.protocolInEffect)} in effect${vis.afterImplementation ? '' : ' (before implementation)'}</h3><ol class="stops">`;
+    vis.steps.forEach((s, i) => {
+      const k = keep(s), pane = 'p' + k;
+      const ents = [...new Set([s.entity, ...s.checks.flatMap((c) => c.evidence.map((e) => e.entity))].filter(Boolean))];
+      const flagged = s.checks.some((c) => !c.ok);
+      h += `<li data-n="${i + 1}" class="${flagged ? 'flagged' : ''}"><div class="stop-head"><b>${esc(s.step)}<a class="data" onclick="toggle('${pane}')">data</a></b><span class="ev">${when(s.at)}${s.by ? ' · ' + esc(s.by) : ''} · ${esc(s.sourceSystem || '')}</span></div><ul class="facts">`;
+      for (const c of s.checks) {
+        h += `<li><span>${c.ok ? '<span class="ok">✓</span>' : '<span class="xx">✗</span>'} ${esc(c.check)}${c.ok ? '' : `: expected ${esc(c.expected)}, found ${esc(c.found)}`}</span>${ev(c.evidence[0])}</li>`;
+      }
+      h += `</ul><div class="datapane" id="${pane}" style="display:none"><div class="lbl">This stop, as the engine computed it</div>${pretty(s)}<div class="lbl">The broker records behind it</div>`;
+      ents.forEach((e, j) => {
+        h += `<div><a class="data" onclick="brokerRecord(this, '${esc(e)}', '${pane}r${j}')">${esc(e)}</a></div><div id="${pane}r${j}" style="display:none"></div>`;
+      });
+      h += '</div></li>';
+    });
+    h += '</ol></div>';
+  }
+  return h;
+}
+
+function renderSite(a) {
+  if (a.error) return `<div class="status-box bad">${esc(a.error)}</div>`;
+  let h = `<div class="snapshot"><b>${esc(a.question)}</b><div>${esc(a.protocol)} implemented at ${esc(a.site)}: <b>${esc(a.implementedAtSite)}</b> ${ev(a.evidence)}</div></div>`;
+  h += '<table><tr><th>Participant</th><th>Visit</th><th>When</th><th>Possible issues</th></tr>';
+  for (const r of a.visits) {
+    const t = r.possibleIssues.length ? r.possibleIssues.map((x) => `<div class="xx">${esc(x)}</div>`).join('') : '<span class="ok">no possible issues</span>';
+    h += `<tr><td><a class="data" onclick="ask('Show me participant ${esc(r.participant)}')">${esc(r.participant)}</a></td><td>${esc(r.visit)}</td><td>${when(r.start)}</td><td>${t}</td></tr>`;
+  }
+  return h + (a.visits.length ? '' : '<tr><td colspan="4" class="muted">No visits since implementation.</td></tr>') + '</table>';
+}
+
+// Ask, showing the engine's own progress lines as they arrive.
+async function askStreaming(question, turn) {
+  const resp = await fetch('/asof/ask', {method: 'POST',
+    headers: {'Content-Type': 'application/json', 'Accept': 'application/x-ndjson'},
+    body: JSON.stringify({question, history, context})});
+  if (!resp.ok || !resp.body) throw new Error('/asof/ask -> ' + resp.status + '\n' + await resp.text());
+  const live = turn.querySelector('.a');
+  live.classList.add('muted');
+  live.innerHTML = '';
+  const reader = resp.body.getReader(), dec = new TextDecoder();
+  let buf = '', result = null; const log = [];
+  for (;;) {
+    const {value, done} = await reader.read();
+    if (done) break;
+    buf += dec.decode(value, {stream: true});
+    let i;
+    while ((i = buf.indexOf('\n')) >= 0) {
+      const line = buf.slice(0, i); buf = buf.slice(i + 1);
+      if (!line.trim()) continue;
+      const msg = JSON.parse(line);
+      if (msg.progress) {
+        log.push(msg.progress);
+        live.insertAdjacentHTML('beforeend', `<div>${esc(msg.progress)}</div>`);
+        while (live.children.length > 7) live.removeChild(live.firstChild);
+      } else if (msg.result) { result = msg.result; }
+      else if (msg.error) { throw new Error(msg.error); }
+    }
+  }
+  if (!result) throw new Error('no answer came back');
+  result.progressLog = log;
+  return result;
+}
+
+async function ask(text) {
+  const input = document.getElementById('question');
+  const question = (text || input.value || input.placeholder).trim();
+  input.value = '';
+  const turn = document.createElement('div');
+  turn.className = 'turn';
+  turn.innerHTML = `<div class="q">${esc(question)}</div><div class="a muted">thinking...</div>`;
+  const thread = document.getElementById('thread');
+  thread.prepend(turn);
+  const send = document.getElementById('send');
+  send.classList.add('spin');
+  try {
+    const r = await askStreaming(question, turn);
+    const who = r.mode === 'claude' ? `Claude (${esc(r.model)}) · ${r.calls.length} tool call${r.calls.length === 1 ? '' : 's'} against the broker`
+                                    : `offline parser (no API key) · ${r.calls.length} engine call${r.calls.length === 1 ? '' : 's'}`;
+    let h = `<div class="q">${esc(question)}</div><div class="a">${md(r.answer)}</div><div class="who">${who}</div>`;
+    if (r.fallbackReason) h += `<div class="who xx">${esc(r.fallbackReason)}</div>`;
+    if (r.progressLog && r.progressLog.length) {
+      h += `<details><summary>How this answer was built: ${r.progressLog.length} steps</summary><pre class="out">${esc(r.progressLog.join('\n'))}</pre></details>`;
+    }
+    for (const c of r.calls) {
+      h += c.tool === 'ask_participant_as_of' ? renderParticipant(c.output)
+         : c.tool === 'visits_since_protocol' ? renderSite(c.output)
+         : c.tool === 'project_participant' ? renderProjection(c.output) : '';
+      h += `<details><summary>${esc(c.tool)}(${esc(JSON.stringify(c.input))}): the call and its full response</summary>${pretty(c)}</details>`;
+      const out = c.output || {};
+      if (out.participant) context = {participant: out.participant.number, site: out.participant.site, protocol: out.protocol && out.protocol.version};
+      if (out.usubjid || (out.identifier && out.identifier.value)) context = Object.assign({}, context, {participant: (out.usubjid || out.identifier.value).split('-').pop()});
+      if (out.site && out.protocol && !out.participant) context = {site: out.site, protocol: out.protocol};
+    }
+    turn.innerHTML = h;
+    history.push({role: 'user', content: question}, {role: 'assistant', content: r.answer});
+  } catch (e) {
+    turn.innerHTML = `<div class="q">${esc(question)}</div><pre class="out err">${esc(e.message)}</pre>`;
+  } finally { send.classList.remove('spin'); }
+}
+
+document.getElementById('chips').innerHTML = EXAMPLES.map((q) => `<button onclick="ask(this.textContent)">${esc(q)}</button>`).join('');
+status();
+</script>
+</body>
+</html>

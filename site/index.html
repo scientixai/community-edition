@@ -51,7 +51,7 @@
 
 <section><div class="wrap">
   <h2>What happens when you run it</h2>
-  <div class="section-intro"><p>Six steps, in order, each one a real request against a real service. The walkthrough UI drives them; every step is also plain curl.</p></div>
+  <div class="section-intro"><p>Seven steps, in order, each one a real request against a real service. The walkthrough UI drives them; every step is also plain curl.</p></div>
   <ol class="pipeline">
     <li><h3>Author</h3><p>A USDM-style study definition becomes NGSI-LD entities in an upstream NEC Scorpio broker, typed with the open T.O.P. cr-domain vocabulary: Study, Arms, Endpoints, EligibilityCriteria, Visits.</p></li>
     <li><h3>Project</h3><p>The study design is projected to CDISC SDTM trial-design domains (TS, TA, TI, TV) as Dataset-JSON. Standards are views, not the stored model.</p></li>
@@ -59,6 +59,7 @@
     <li><h3>Transform</h3><p>sdtm.oak, the open-source CDISC/pharmaverse engine, maps raw execution data to SDTM: controlled terminology, sequence derivation, the real thing.</p></li>
     <li><h3>Query</h3><p>DuckDB runs SQL straight over the files in the lake. Athena semantics, zero infrastructure. You can also just <code>ls</code> the lake.</p></li>
     <li><h3>Sprinkle of AI</h3><p>A natural-language clinical statement becomes a broker entity and re-triggers the whole pipeline. One model call, or a deterministic offline stub when there is no API key.</p></li>
+    <li><h3>Ask</h3><p>What did we know about Participant 204 when Protocol v3.0 was implemented at Site 123? Nine source systems, one graph, every step checked against what was in effect at that minute, every fact cited to its source system and time.</p></li>
   </ol>
 </div></section>
 

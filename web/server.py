@@ -23,8 +23,17 @@ for _cand in (_HERE, _HERE / "lib", _HERE.parent / "pipeline" / "lib"):
         sys.path.insert(0, str(_cand))
         break
 import pnehttp
+import ask_nl
+import asof
+import loader
+import projections
 
 PUBLIC = _HERE / "public"
+EXAMPLE_SOURCES = next(
+    (c for c in (_HERE / "examples" / "cvrm-118" / "sources",
+                 _HERE.parent / "examples" / "cvrm-118" / "sources") if c.is_dir()),
+    None,
+)
 SEED = PUBLIC / "seed"
 ALLOWED_SEED_BATCHES = frozenset(
     {
@@ -76,6 +85,8 @@ class WebHandler(BaseHTTPRequestHandler):
             self._json(200, {"ok": True, "service": "web"})
         elif path.startswith("/api/"):
             self._proxy(method)
+        elif path.startswith("/asof/"):
+            self._asof(method, path, urllib.parse.parse_qs(parsed.query))
         elif path.startswith("/seed-with-provenance"):
             if method == "POST":
                 self._seed_with_provenance()
@@ -100,6 +111,72 @@ class WebHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
         self.wfile.write(data)
+
+    def _asof(self, method: str, path: str, query: dict):
+        """As-of walkthrough: load the example source systems, then ask."""
+        q = {k: v[0] for k, v in query.items() if v}
+        try:
+            if path == "/asof/load" and method == "POST":
+                if EXAMPLE_SOURCES is None:
+                    self._json(404, {"error": "example sources not found"})
+                    return
+                lines = []
+                summary = loader.load(EXAMPLE_SOURCES, say=lines.append)
+                self._json(200, {"summary": summary, "log": lines})
+            elif path == "/asof/site" and method == "GET":
+                self._json(200, asof.ask_site(q.get("site", ""), q.get("protocol") or None))
+            elif path == "/asof/participant" and method == "GET":
+                who = q.get("participant") or q.get("subject") or q.get("patient") or ""
+                self._json(200, asof.ask_participant(who, q.get("site") or None, q.get("protocol") or None))
+            elif path == "/asof/project" and method == "GET":
+                who = q.get("participant") or q.get("subject") or q.get("patient") or ""
+                self._json(200, projections.project_participant(
+                    who, q.get("site") or None, q.get("protocol") or None, q.get("format", "")))
+            elif path == "/asof/mode" and method == "GET":
+                g = asof.Graph()
+                self._json(200, dict(ask_nl.mode(), participants=len(g.of_type("Participant")),
+                                     sites=len(g.of_type("StudySite"))))
+            elif path == "/asof/ask" and method == "POST":
+                length = int(self.headers.get("Content-Length") or 0)
+                body = json.loads(self.rfile.read(length) or b"{}")
+                question = str(body.get("question", "")).strip()
+                if not question:
+                    self._json(400, {"error": "ask a question"})
+                    return
+                if "ndjson" in (self.headers.get("Accept") or ""):
+                    self._ask_streaming(question, body)
+                    return
+                self._json(200, ask_nl.ask(question, body.get("history") or [], body.get("context") or {}))
+            elif path == "/asof/history" and method == "GET":
+                self._json(200, asof.entity_history(q.get("id", "")))
+            else:
+                self._json(404, {"error": f"no route {method} {path}"})
+        except Exception as exc:  # report, do not drop the connection
+            self._json(500, {"error": f"{type(exc).__name__}: {exc}"})
+
+    def _ask_streaming(self, question: str, body: dict):
+        """One JSON line per progress message, then the result; the page shows them live."""
+        self.send_response(200)
+        self.send_header("Content-Type", "application/x-ndjson")
+        self.send_header("Cache-Control", "no-cache")
+        self.send_header("Connection", "close")
+        self.end_headers()
+        self.close_connection = True
+
+        def emit(obj):
+            try:
+                self.wfile.write((json.dumps(obj) + "\n").encode("utf-8"))
+                self.wfile.flush()
+            except (BrokenPipeError, ConnectionResetError):
+                pass
+
+        asof.on_progress(lambda msg: emit({"progress": msg}))
+        try:
+            emit({"result": ask_nl.ask(question, body.get("history") or [], body.get("context") or {})})
+        except Exception as exc:
+            emit({"error": f"{type(exc).__name__}: {exc}"})
+        finally:
+            asof.on_progress(None)
 
     def _seed_with_provenance(self):
         """Load a seed batch with provenance through broker_upsert."""
