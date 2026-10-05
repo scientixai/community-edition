@@ -166,7 +166,9 @@ def construct(statement: str, allowed: dict, model: str) -> dict:
     structure = json.dumps({"allowedTypes": allowed["types"], "attributeVocabulary": allowed["vocabulary"]})
     messages = [{"role": "user", "content": f"Allowed structure: {structure}\n\nStatement: {statement}"}]
     calls = []
-    for _ in range(MAX_ROUNDS):
+    asof.report(f"Proposing from: {statement}")
+    for rounds in range(MAX_ROUNDS):
+        asof.report("Claude is reading the statement" if rounds == 0 else "Claude is reading what the graph returned")
         resp = ask_nl._post({
             "model": model, "max_tokens": 16000, "system": SYSTEM, "tools": TOOLS,
             "thinking": {"type": "adaptive"}, "output_config": {"effort": "medium"},
@@ -185,6 +187,7 @@ def construct(statement: str, allowed: dict, model: str) -> dict:
             if block.get("type") != "tool_use":
                 continue
             args = block.get("input") or {}
+            asof.report(f"Claude asked the graph: {block['name']}({', '.join(str(v) for v in args.values())})")
             try:
                 out = run_tool(g, block["name"], args)
             except Exception as exc:  # report to the model, do not crash the turn
@@ -263,6 +266,11 @@ def check(entities: list[dict], allowed: dict) -> dict:
                           "toLabel": to_label if g.get(target) or target in proposed else None})
     if not write and not reasons:
         reasons.append("nothing new to write")
+    for r in rows:
+        asof.report(f"Check: {r['label']} {r['id']} -> {r['status']}")
+    unresolved = [link for link in links if link["status"] == "unresolved"]
+    asof.report(f"Check: {len(links) - len(unresolved)} of {len(links)} links resolve"
+                + ("; blocked: " + "; ".join(reasons) if reasons else "; ready to commit"))
     return {"resolution": rows, "links": links, "write": write,
             "blocked": bool(reasons), "reasons": reasons}
 

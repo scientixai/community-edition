@@ -43,6 +43,8 @@ def on_progress(callback) -> None:
 
 
 def report(message: str) -> None:
+    """A progress line: to the page that asked (if any) and to the service log."""
+    print(f"[engine] {message}", flush=True)
     cb = getattr(_progress, "cb", None)
     if cb:
         cb(message)

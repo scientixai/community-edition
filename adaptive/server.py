@@ -293,6 +293,8 @@ class AdaptiveHandler(pnehttp.JsonHandler):
         now = datetime.datetime.now(datetime.timezone.utc).isoformat().replace("+00:00", "Z")
         authority_source = authority.get("source") or authority.get("approver") or "adaptive-commit"
 
+        print(f"[engine] Commit approved by {authority_source}: writing {len(checked['write'])} entities, "
+              f"observedAt {proposal['observedAt']}, sourceSystem {propose.SOURCE_SYSTEM!r}", flush=True)
         pnehttp.broker_upsert(
             propose.stamp(checked["write"], proposal["observedAt"]),
             provenance={
@@ -303,6 +305,8 @@ class AdaptiveHandler(pnehttp.JsonHandler):
         )
         record_decision(proposal_id, "allowed", checked["write"], authority)
         propose.wait_for_history([e["id"] for e in checked["write"]])
+        for e in checked["write"]:
+            print(f"[engine] Written to the broker: {e['id']}", flush=True)
 
         return 200, {
             "proposalId": proposal_id,
