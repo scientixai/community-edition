@@ -1,0 +1,30 @@
+{
+  "description": "Model index for as-of questions. For each entity type: which links to follow outward (attribute names) and which links point in from other types ([type, attribute]). The engine walks only these, starting from whatever it is asked about. Nothing here names an instance.",
+  "links": {
+    "Participant": {
+      "out": ["forStudySite", "hasConsent"],
+      "in": [["VisitOccurrence", "forParticipant"]]
+    },
+    "InformedConsent": {"out": ["witnessedBy"]},
+    "StudySite": {"in": [["SiteActivation", "atSite"]]},
+    "SiteActivation": {"out": ["activates"]},
+    "VisitOccurrence": {
+      "in": [["ActivityOccurrence", "performedInVisit"], ["CustodyEvent", "performedInVisit"],
+             ["AssayResult", "performedInVisit"], ["Specimen", "performedInVisit"]]
+    },
+    "ActivityOccurrence": {"out": ["performedBy", "prov:used"]},
+    "AssayResult": {"out": ["performedBy"]},
+    "Person": {"in": [["Delegation", "delegate"], ["Credential", "credentialOf"]]},
+    "pne:Device": {"in": [["Credential", "credentialOf"]]}
+  },
+  "steps": ["ActivityOccurrence", "CustodyEvent", "AssayResult"],
+  "taskRequirements": {
+    "description": "What a performer of each task must hold at the time, beyond delegation. Site tasks need a delegation log entry and training on the protocol in effect at the site.",
+    "siteTasks": ["specimen collection", "specimen processing", "specimen packaging"],
+    "credentials": {
+      "specimen collection": "phlebotomy",
+      "specimen packaging": "iata",
+      "assay": "analyst"
+    }
+  }
+}

@@ -1,0 +1,22 @@
+lms_user,course,kind,protocol_version,completed_on,expires_on
+jmoreno,CVRM-118 protocol v2.0 training,protocol,2.0,2026-01-21,
+psingh,CVRM-118 protocol v2.0 training,protocol,2.0,2026-01-21,
+tokafor,CVRM-118 protocol v2.0 training,protocol,2.0,2026-01-21,
+dbrandt,CVRM-118 protocol v2.0 training,protocol,2.0,2026-01-20,
+elaurent,CVRM-118 protocol v2.0 training,protocol,2.0,2026-01-20,
+kosei,CVRM-118 protocol v2.0 training,protocol,2.0,2026-02-02,
+npetrov,CVRM-118 protocol v2.0 training,protocol,2.0,2026-02-02,
+psingh,CVRM-118 protocol v3.0 training,protocol,3.0,2026-08-02,
+tokafor,CVRM-118 protocol v3.0 training,protocol,3.0,2026-08-03,
+jmoreno,CVRM-118 protocol v3.0 training,protocol,3.0,2026-08-10,
+dbrandt,CVRM-118 protocol v3.0 training,protocol,3.0,2026-07-27,
+elaurent,CVRM-118 protocol v3.0 training,protocol,3.0,2026-07-27,
+kosei,CVRM-118 protocol v3.0 training,protocol,3.0,2026-08-10,
+npetrov,CVRM-118 protocol v3.0 training,protocol,3.0,2026-08-10,
+jmoreno,Phlebotomy certification 2024-088,phlebotomy,,2024-03-01,2027-03-01
+psingh,Phlebotomy certification 2025-017,phlebotomy,,2025-01-15,2027-01-15
+dbrandt,Phlebotomy certification 2023-310,phlebotomy,,2023-11-02,2026-11-02
+kosei,Phlebotomy certification 2025-204,phlebotomy,,2025-06-01,2027-06-01
+tokafor,IATA dangerous goods IATA-2025-0911,iata,,2025-09-11,2027-09-11
+elaurent,IATA dangerous goods IATA-2025-0412,iata,,2025-04-12,2027-04-12
+npetrov,IATA dangerous goods IATA-2024-0630,iata,,2024-06-30,2026-06-30

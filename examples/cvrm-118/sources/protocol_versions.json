@@ -1,0 +1,33 @@
+{
+  "study": "CVRM-118",
+  "sponsor": "ExampleBiotech",
+  "phase": "PHASE_3",
+  "versions": [
+    {
+      "version": "2.0",
+      "approved": "2026-01-15",
+      "icfVersion": "2.0",
+      "pkDraw": {
+        "tubes": "2x EDTA + 1x SST",
+        "spin": "3000 rpm x 15 min"
+      },
+      "shipping": {
+        "tempMinC": -86,
+        "tempMaxC": -70
+      }
+    },
+    {
+      "version": "3.0",
+      "approved": "2026-07-20",
+      "icfVersion": "3.0",
+      "pkDraw": {
+        "tubes": "3x EDTA + 1x SST",
+        "spin": "3000 rpm x 15 min"
+      },
+      "shipping": {
+        "tempMinC": -86,
+        "tempMaxC": -70
+      }
+    }
+  ]
+}

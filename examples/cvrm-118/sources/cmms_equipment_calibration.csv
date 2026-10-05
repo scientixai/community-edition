@@ -1,0 +1,4 @@
+equipment_id,site_number,model,serial,calibrated_on,next_due
+EQ-123-01,123,CF-200 centrifuge,2023-441,2026-03-15,2026-09-15
+EQ-087-01,087,CF-200 centrifuge,2022-118,2026-02-27,2026-08-27
+EQ-045-01,045,CF-210 centrifuge,2024-007,2026-04-02,2026-10-02

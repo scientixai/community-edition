@@ -82,7 +82,13 @@ def lake_write(rel_path: str, content, provenance: dict | None = None) -> dict:
 
 def snapshot_raw(study_id: str, raw_dir: pathlib.Path, timestamp: str) -> dict:
     """Flatten broker state into raw EDC-style extracts for sdtm.oak."""
-    participants = pnehttp.broker_get_entities("Participant")
+    # One broker can hold several studies; keep only this study's participants
+    # (participants that name no study are kept for older seed data).
+    study_urn = f"urn:ngsi-ld:Study:{study_id}"
+    participants = [
+        p for p in pnehttp.broker_get_entities("Participant")
+        if attr_value(p, "forStudy") in (None, study_urn)
+    ]
     visits = pnehttp.broker_get_entities("VisitOccurrence")
     visit_defs = {
         v["id"]: v for v in pnehttp.broker_get_entities("VisitDefinition")
@@ -99,6 +105,8 @@ def snapshot_raw(study_id: str, raw_dir: pathlib.Path, timestamp: str) -> dict:
     vitals_rows = []
     for obs in observations:
         part_ref = attr_value(obs, "forParticipant")
+        if part_ref not in by_id:
+            continue
         visit_ref = attr_value(obs, "atVisit")
         visit = visits_by_id.get(visit_ref) if visit_ref else None
         vdef = None
